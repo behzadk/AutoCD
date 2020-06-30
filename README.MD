@@ -27,8 +27,8 @@ config file arguments
 The `--MSG_config` is an optional command-line argument is used to invoke the Model Space Generator and requires a config file as input.
 
 Examples running Model Space Generator for two and three species model spaces:
-`python3 run_AutoCD.py --MSG_config MSG_two_strain.yaml`
-`python3 run_AutoCD.py --MSG_config MSG_three_strain.yaml`
+`python3 run_AutoCD.py --MSG_config ./config_files/MSG_two_strain.yaml` \
+`python3 run_AutoCD.py --MSG_config ./config_files/MSG_three_strain.yaml`
 
 `MSG_two_strain.yaml` and `MSG_three_strain.yaml` contain examples of how to specify a model space config file.
 
@@ -40,15 +40,15 @@ The `--ABC_config` is an optional command-line argument used to invoke the model
 of using the same input files. Each experiment is stored in a subdirectory, all subdirectories are used by data analysis scripts
 
 Examples running ABC SMC model selection for two and three species model spaces:
-`python3 run_AutoCD.py --ABC_config ABC_two_strain.yaml --exp_num 0`
-`python3 run_AutoCD.py --ABC_config ABC_three_strain.yaml --exp_num 0`
+`python3 run_AutoCD.py --ABC_config ./config_files/ABC_two_strain.yaml --exp_num 0` \
+`python3 run_AutoCD.py --ABC_config ./config_files/ABC_three_strain.yaml --exp_num 0`
 
 #### Data Analysis
 
 The `--DA_config` is an optional command-line argument used to invoke data analysis of a set of finished ABC experiments, requiring a config file as input.
 
 Examples running data analysis for  two and three species model spaces:
-`python3 run_AutoCD.py --DA_config DA_two_strain.yaml --exp_num 0`
+`python3 run_AutoCD.py --DA_config ./config_files/DA_two_strain.yaml --exp_num 0`
 
 ## Example
 Here is a typical bash script that first generates a model space, runs four repeats of ABC SMC model selection, then performs data analysis on these repeat experiments
@@ -57,14 +57,14 @@ Here is a typical bash script that first generates a model space, runs four repe
 n_repeats=4
 
 # Run model space generator
-python3 run_AutoCD.py --MSG_config MSG_two_strain.yaml
+python3 run_AutoCD.py --MSG_config ./config_files/MSG_two_strain.yaml
 
 # Conduct n repeat model selection experiements
 for i in $(seq 0 $n_repeats); do 
-	python3 run_AutoCD.py --ABC_config ABC_two_strain.yaml --exp_num $i
+	python3 run_AutoCD.py --ABC_config ./config_files/ABC_two_strain.yaml --exp_num $i
 	echo $i; 
 done
 
 # Run data analysis
-python3 run_AutoCD.py --DA_config DA_two_species.yaml
+python3 run_AutoCD.py --DA_config ./config_files/DA_two_species.yaml
 ```
