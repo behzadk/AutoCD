@@ -1,5 +1,8 @@
 # AutoCD: Automated synthetic micobial Community Designer
-Automated equation generation of candidate models fo synthetic microbial communities and performs model selection using ABC SMC for customisable objective population behaviour. 
+Automated equation generation of candidate models for synthetic microbial communities and performs model selection using ABC SMC for customisable objective population behaviour. 
+
+AutoCD builds a equations for candidate model systems that can simulate the growth of bacteria capturing important interactions such as competition for nutrients, communication through quorum sensing and amensalism via bacteriocins. AutoCD performs model selection for a desired population level behaviour. AutoCD is intended to aide in the design of synthetic microbial systems, identfying promising candidate network topologies and essential parameters for controlling a microbial community.
+
 
 AutoCD is written in C++ and Python 3.4+, data analysis scripts require R. This has been tested on Linux only.
 
@@ -26,7 +29,7 @@ config file arguments
 #### Model Space Generator
 The `--MSG_config` is an optional command-line argument is used to invoke the Model Space Generator and requires a config file as input.
 
-Examples running Model Space Generator for two and three species model spaces:
+Examples running Model Space Generator for two and three species model spaces: \
 `python3 run_AutoCD.py --MSG_config ./config_files/MSG_two_strain.yaml` \
 `python3 run_AutoCD.py --MSG_config ./config_files/MSG_three_strain.yaml`
 
@@ -39,7 +42,7 @@ The `--ABC_config` is an optional command-line argument used to invoke the model
 `ABC_two_strain.yaml` and  `ABC_three_strain.yaml` contain examples of how to specify an ABC config file. `--exp_num` is used to differentiate betweet repeats 
 of using the same input files. Each experiment is stored in a subdirectory, all subdirectories are used by data analysis scripts
 
-Examples running ABC SMC model selection for two and three species model spaces:
+Examples running ABC SMC model selection for two and three species model spaces: \
 `python3 run_AutoCD.py --ABC_config ./config_files/ABC_two_strain.yaml --exp_num 0` \
 `python3 run_AutoCD.py --ABC_config ./config_files/ABC_three_strain.yaml --exp_num 0`
 
@@ -47,7 +50,7 @@ Examples running ABC SMC model selection for two and three species model spaces:
 
 The `--DA_config` is an optional command-line argument used to invoke data analysis of a set of finished ABC experiments, requiring a config file as input.
 
-Examples running data analysis for  two and three species model spaces:
+Examples running data analysis for  two and three species model spaces: \
 `python3 run_AutoCD.py --DA_config ./config_files/DA_two_strain.yaml --exp_num 0`
 
 ## Example
