@@ -1,0 +1,3 @@
+experiment_name: two_strain_0_SMC
+inputs_folder: './ABC_input_files/input_files_two_strain_0/'
+output_folder: './output/'
