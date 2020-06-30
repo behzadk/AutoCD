@@ -56,6 +56,8 @@ Examples running data analysis for  two and three species model spaces: \
 ## Example
 Here is a typical bash script that first generates a model space, runs four repeats of ABC SMC model selection, then performs data analysis on these repeat experiments
 ```
+#!/bin/bash
+
 # Set number of repeat experiments
 n_repeats=4
 
