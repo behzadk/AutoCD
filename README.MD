@@ -1,4 +1,4 @@
-# AutoCD: Automated synthetic micobial Community Designer
+# AutoCD: Automated synthetic microbial Community Designer
 Automated equation generation of candidate models for synthetic microbial communities and performs model selection using ABC SMC for customisable objective population behaviour. 
 
 AutoCD builds a equations for candidate model systems that can simulate the growth of bacteria capturing important interactions such as competition for nutrients, communication through quorum sensing and amensalism via bacteriocins. AutoCD performs model selection for a desired population level behaviour. AutoCD is intended to aide in the design of synthetic microbial systems, identfying promising candidate network topologies and essential parameters for controlling a microbial community.
