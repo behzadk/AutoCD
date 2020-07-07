@@ -3,16 +3,16 @@
 # model space limits are each strain can express a maximum of one bacteriocin,
 # and one QS. Each strain is sensitive to up to one bacteriocin in the system.
 
-# Set absolute paths to output of ModelSpageGenerator (MSG) 
+
 model_space_name: input_files_three_strain_0
 
 # Output model space to the ABC input files dir
-output_dir: "/home/behzad/Documents/AutoCD/ABC_input_files/"
+output_dir: "./ABC_input_files/"
 
 # Paths referring to .csv files containing 
 # default parameter and initial species prior ranges
-default_parameters_path: '/home/behzad/Documents/AutoCD/ModelSpaceGenerator/default_params/default/default_params.csv'
-default_initial_species_path: '/home/behzad/Documents/AutoCD/ModelSpaceGenerator/default_params/default/default_init_species.csv'
+default_parameters_path: './ModelSpaceGenerator/default_params/default/default_params.csv'
+default_initial_species_path: './ModelSpaceGenerator/default_params/default/default_init_species.csv'
 
 # Set IDs for the strains being used. Number of IDs is the number of strains
 strain_ids:
