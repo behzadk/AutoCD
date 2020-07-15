@@ -19,7 +19,7 @@ g++ (tested with g++-8)
 Boost >=  v1.67
 OpenMP
 
-Boost must be installed for the version of python being used to run AutoCD. Ensure boost has been correvtly added to paths. Run `build_test.sh` to test on a simple build example and identify issues with library flags and ensuring the correct Python includes. Changes should be made to `build_pop_modules.sh` which is used to the build necessarry Boost Python libarary for a newly generated model space.
+Boost must be installed for the version of python being used to run AutoCD. Ensure boost has been correctly added to paths. Run `build_test.sh` to test on a simple build example and identify issues with library flags and ensuring the correct Python includes. Changes should be made to `build_pop_modules.sh` which is used to the build necessary Boost Python libarary for a newly generated model space.
 
 #### R packages: ####
 ggplot2, ggisoband, gridExtra, sm
