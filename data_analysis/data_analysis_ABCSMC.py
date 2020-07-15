@@ -120,10 +120,6 @@ def generate_marginal_probability_boxplot(pop_dir_list, output_dir, hide_x_ticks
     ax.margins(y=0)
     fig.tight_layout()
     plt.show()
-    # model_space_report_df.drop(model_space_report_df.filter(regex="Unname"),axis=1, inplace=True)
-    # model_space_report_df = model_space_report_df.sort_values(by='model_idx', ascending=False).reset_index(drop=True)
-    # print(model_space_report_df.columns)
-    # model_space_report_list.append(model_space_report_df)
 
 
 def generate_marginal_probability_distribution(pop_dir_list, output_dir, hide_x_ticks=True, show_median=True, show_BF=False, drop_eqless=-1):
@@ -236,7 +232,6 @@ def plot_all_model_param_distributions(pop_dir, inputs_dir, figure_output_dir):
     model_space_report_path = pop_dir + "combined_model_space_report.csv"
     model_space_report_df = pd.read_csv(model_space_report_path, index_col=0)
     # generate_model_space_statistics(model_space_report_df, "model_marginal")
-    print(list(model_space_report_df))
 
     model_space_report_df.drop(model_space_report_df[model_space_report_df['model_marginal_mean'] == 0].index, inplace=True)
 
@@ -660,10 +655,6 @@ def self_regulation_bar_plot(pop_dir_list, adj_mat_dir, output_dir, hide_x_ticks
     model_space_report_df = merge_model_space_report_df_list(model_space_report_list)
     generate_model_space_statistics(model_space_report_df, "model_marginal")
     
-    # total_accepted = sum(model_space_report_df['accepted_count'].values)
-    # new_model_marginals = [x/total_accepted for x in model_space_report_df['accepted_count'].values]
-    # model_space_report_df['model_marginal_mean'] = new_model_marginals
-
     if drop_unnacepted:
         model_space_report_df.drop(model_space_report_df[model_space_report_df['model_marginal_mean'] == 0.0].index, inplace=True)
 
@@ -716,21 +707,10 @@ def self_regulation_bar_plot(pop_dir_list, adj_mat_dir, output_dir, hide_x_ticks
             adjusted_vals.append(row['model_marginal_mean'])
     model_space_report_df['model_marginal_mean'] = adjusted_vals
     print(model_space_report_df)
-    # if drop_unnacepted:
-    # model_space_report_df.drop(model_space_report_df[model_space_report_df['symmetrical'] == False].index, inplace=True)
-    # model_idxs = model_space_report_df['model_idx'].values
-    # model_space_report_df = model_space_report_df.sort_values(by='model_marginal_mean', ascending=False).reset_index(drop=True)
     model_space_report_df.to_csv(output_dir + "dists_test.csv")
 
     fig, ax = plt.subplots()
 
-    print(model_space_report_df)
-    if num_pops > 1:
-        pass
-        # ax.errorbar(model_space_report_df.index, 
-        #             model_space_report_df['model_marginal_mean'], 
-        #             yerr=model_space_report_df['model_marginal_std'], fmt=',', color='black', alpha=1,
-        #             label=None, elinewidth=0.5)
 
     sns.barplot(model_space_report_df.index, model_space_report_df.model_marginal_mean, 
                      data=model_space_report_df, alpha=0.9, ax=ax)
