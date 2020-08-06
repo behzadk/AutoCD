@@ -9,6 +9,7 @@ import csv
 from timeit import default_timer as timer
 import sys
 from matplotlib.backends.backend_pdf import PdfPages
+from matplotlib import pylab
 import matplotlib.pyplot as plt
 from . import plotting
 from scipy.optimize import fsolve
@@ -16,6 +17,9 @@ import copy
 import pickle
 import math
 import time
+
+from pyunicorn.timeseries import RecurrencePlot, RecurrenceNetwork
+import seaborn as sns
 
 
 ## Routines to run optimisation/model selection algorithms.
@@ -315,84 +319,6 @@ class ABC:
                             [particle.sim_idx] + [particle.batch_idx] + [self.population_number] + [self.exp_num] + [
                                 particle.curr_weight] + particle.curr_params + particle.curr_init_state)
 
-    def write_particle_sum_stdevs(self, out_dir, model_refs, batch_num, simulated_particles, from_timepoint):
-        out_path = out_dir + "sum_stdev.csv"
-
-        if not os.path.isfile(out_path):
-            col_header = ['sim_idx', 'batch_num', 'model_ref', 'sum_stdev']
-
-            with open(out_path, 'a') as out_csv:
-                wr = csv.writer(out_csv)
-                wr.writerow(col_header)
-
-        with open(out_path, 'a') as out_csv:
-            wr = csv.writer(out_csv)
-
-            for sim_idx, m_ref in enumerate(model_refs):
-                integ_error = self.pop_obj.get_particle_integration_error(sim_idx)
-
-                if integ_error == 'species_decayed' or integ_error == 'no_progress_error' or integ_error == 'step_adjustment_error':
-                    sum_stdev = np.nan
-
-                else:
-                    sum_stdev = self.pop_obj.get_particle_sum_stdev(sim_idx, from_timepoint)
-
-                row_vals = [sim_idx, batch_num, m_ref, sum_stdev]
-
-                wr.writerow(row_vals)
-
-    def write_particle_sum_grads(self, out_dir, model_refs, batch_num, simulated_particles, from_timepoint):
-        out_path = out_dir + "sum_grad.csv"
-
-        if not os.path.isfile(out_path):
-            col_header = ['sim_idx', 'batch_num', 'model_ref', 'sum_grad']
-
-            with open(out_path, 'a') as out_csv:
-                wr = csv.writer(out_csv)
-                wr.writerow(col_header)
-
-        with open(out_path, 'a') as out_csv:
-            wr = csv.writer(out_csv)
-
-            for sim_idx, m_ref in enumerate(model_refs):
-                integ_error = self.pop_obj.get_particle_integration_error(sim_idx)
-
-                if integ_error == 'species_decayed' or integ_error == 'no_progress_error' or integ_error == 'step_adjustment_error':
-                    sum_grad = np.nan
-
-                else:
-                    sum_grad = self.pop_obj.get_particle_sum_grad(sim_idx)
-
-                row_vals = [sim_idx, batch_num, m_ref, sum_grad]
-
-                wr.writerow(row_vals)
-
-    def write_particle_grads(self, out_dir, model_refs, batch_num, simulated_particles, from_timepoint):
-        out_path = out_dir + "all_grads.csv"
-        if not os.path.isfile(out_path):
-            col_header = ['sim_idx', 'batch_num', 'model_ref', 'grad_N1', 'grad_N2', 'grad_S', 'grad_x_4', 'grad_x_5',
-                          'grad_x_6', 'grad_x_7']
-
-            with open(out_path, 'a') as out_csv:
-                wr = csv.writer(out_csv)
-                wr.writerow(col_header)
-
-        with open(out_path, 'a') as out_csv:
-            wr = csv.writer(out_csv)
-
-            for sim_idx, m_ref in enumerate(model_refs):
-                integ_error = self.pop_obj.get_particle_integration_error(sim_idx)
-
-                if integ_error == 'species_decayed' or integ_error == 'no_progress_error' or integ_error == 'step_adjustment_error':
-                    all_grads = []
-
-                else:
-                    all_grads = self.pop_obj.get_particle_grads(sim_idx)
-
-                row_vals = [sim_idx, batch_num, m_ref] + all_grads
-
-                wr.writerow(row_vals)
-
     ## Writes the population distance thresholds.
     # @param out_dir Output directory
     # @param epsilon current distance thresholds
@@ -407,53 +333,254 @@ class ABC:
                 wr.writerow(col_header)
                 wr.writerow(epsilon)
 
-    def write_time_to_stability(self, out_dir, model_refs, batch_num, simulated_particles):
+    def calculate_separtion_coeffs(self, model_refs, input_params, init_states):
+        init_theta_states = [copy.deepcopy(state) for state in init_states]
 
-        out_path = out_dir + "time_to_stab.csv"
+        # Peturb by init species theta_0
+        for theta_state in init_theta_states:
+            perturb_idx = np.random.choice(self.fit_species)
+            perturb_idx = 2
+            theta_state[perturb_idx] += self.theta_0
 
-        # If file doesn't exist, write header
-        if not os.path.isfile(out_path):
-            col_header = ['sim_idx', 'batch_num', 'model_ref', 'time_to_stab']
+        separation_coefficients = [self.theta_0 for c in range(len(model_refs))]
 
-            with open(out_path, 'a') as out_csv:
-                wr = csv.writer(out_csv)
-                wr.writerow(col_header)
+        curr_states = [copy.deepcopy(state) for state in init_states]
+        curr_theta_states = [copy.deepcopy(state) for state in init_theta_states]
+        
+        # Simulate step
+        for x in range(self.sep_length):
+            if len(curr_states) < self.n_sims_batch:
+                adjusted_sims_batch = len(curr_states)
 
-        time_points = self.pop_obj.get_timepoints_list()
+            else:
+                adjusted_sims_batch = self.n_sims_batch
 
-        with open(out_path, 'a') as out_csv:
-            wr = csv.writer(out_csv)
+            pop_obj = population_modules.Population(adjusted_sims_batch, self.t_0, self.dt*2,
+                                                         self.dt, curr_states, input_params, model_refs,
+                                                         self.fit_species, self.abs_tol, self.rel_tol)
 
-            for sim_idx, m_ref in enumerate(model_refs):
-                integ_error = self.pop_obj.get_particle_integration_error(sim_idx)
+            pop_obj_theta = population_modules.Population(adjusted_sims_batch, self.t_0, self.dt*2,
+                                                         self.dt, curr_theta_states, input_params, model_refs,
+                                                         self.fit_species, self.abs_tol, self.rel_tol)
+            pop_obj.generate_particles()
+            pop_obj_theta.generate_particles()
 
-                time_to_stab = 0
+            pop_obj.simulate_particles()
+            pop_obj_theta.simulate_particles()
 
-                if integ_error == 'species_decayed' or integ_error == 'no_progress_error' or integ_error == 'step_adjustment_error':
-                    time_to_stab = np.nan
+            # Get step separations
+            for sim_idx in range(len(model_refs)):
+                final_vals = pop_obj.get_particle_final_species_values(sim_idx)
+                final_vals_theta = pop_obj_theta.get_particle_final_species_values(sim_idx)
 
-                else:
+                # Calculate separation
+                theta_1 = 0
+                for y_a, y_b in zip(final_vals, final_vals_theta):
+                    theta_1 += (y_a - y_b)**2 
 
-                    final_state = self.pop_obj.get_particle_final_species_values(sim_idx)
-                    state_list = self.pop_obj.get_particle_state_list(sim_idx)
+                theta_1 = theta_1**0.5
+                theta_1 = theta_1
 
-                    n_species = len(simulated_particles[sim_idx]._init_species_prior)
+                # Set next step init states
+                species_idx = 0
+                for y_a, y_b in zip(final_vals, final_vals_theta):
+                    # Set state for next sim
+                    curr_states[sim_idx][species_idx] = y_a
 
-                    state_list = np.reshape(state_list, (len(time_points), n_species))
+                    # Adjusted state of y_theta for next sim
+                    # curr_theta_states[sim_idx][species_idx] = y_a + (self.theta_0 / theta_1) * (y_b - y_a)
+                    curr_theta_states[sim_idx][species_idx] = y_a + (self.theta_0 * (y_b - y_a)) / theta_1
 
-                    for t_idx, t in enumerate(time_points):
-                        lists_equal = list(state_list[t_idx]) == list(final_state)
+                    species_idx += 1
 
-                        if lists_equal:
-                            time_to_stab = t
-                            break
+                if x > self.n_skip:
+                    # Add separation coeff to total
+                    separation_coefficients[sim_idx] += np.log2(abs(theta_1/self.theta_0))
 
-                row_vals = [sim_idx, batch_num, m_ref, time_to_stab]
-                wr.writerow(row_vals)
+        # Make into mean
+        separation_coefficients = [sep / (self.sep_length - self.n_skip) for sep in separation_coefficients]
 
-    ## Run ABC SMC algorithm.
-    # @param alpha Lowest proportion from which to generate next distance thresholds
-    def run_model_selection_ABC_SMC(self, alpha=0.5):
+        return separation_coefficients, init_theta_states
+
+    def get_RQA_distances(self, model_refs, init_states, pop_num, batch_num, plot_RQA=False):
+        distances = []
+
+        # Iterate all particles in batch
+        for sim_idx, m_ref in enumerate(model_refs):
+            state_list = self.pop_obj.get_particle_state_list(sim_idx)
+            time_points = self.pop_obj.get_timepoints_list()
+
+            state_list = state_list[50000:]
+            time_points = time_points[50000:]
+
+            try:
+                state_list = np.reshape(state_list, (len(time_points), len(init_states[sim_idx])))
+
+
+            except(ValueError):
+                # print(len(state_list)/len(init_states[sim_idx]))
+                time_points = range(int(len(state_list) / len(init_states[sim_idx])))
+                state_list = np.reshape(state_list, (len(time_points), len(init_states[sim_idx])))
+
+            # state_list = state_list[40000:]
+            # time_points = time_points[40000:]
+
+            #  Settings for the recurrence plot
+            RR = 0.05
+            # Distance metric in phase space ->
+            # Possible choices ("manhattan","euclidean","supremum")
+            METRIC = "supremum"
+
+            #  Generate a recurrence plot object with fixed recurrence rate RR
+            rp = RecurrencePlot(state_list, metric=METRIC, 
+                normalize=True, recurrence_rate=RR, silence_level=3)
+            det = rp.determinism(l_min=2)
+            entropy = rp.diag_entropy(l_min=2)
+            laminarity = rp.laminarity(v_min=2)
+
+            distances.append([det, entropy, laminarity])
+
+            if plot_RQA:
+                out_path_template = self.out_dir + "Population_" + str(self.population_number) + "/simulation_plots/RQA" + "_batch_" + str(self.batch_num) + "_idx_#SIM_IDX#_sep.pdf"
+                out_path = out_path_template.replace('#SIM_IDX#', str(sim_idx))
+                fig = plt.figure()
+                plt.matshow(rp.recurrence_matrix())
+                plt.savefig(out_path, dpi=500)
+                plt.close()
+                plt.clf()
+
+        return distances
+
+
+    def plot_RQA(self, model_refs, init_states, pop_num, batch_num):
+        # Make new pdf
+        negative_count = 0
+
+        # Iterate all particles in batch
+        for sim_idx, m_ref in enumerate(model_refs):
+            state_list = self.pop_obj.get_particle_state_list(sim_idx)
+            time_points = self.pop_obj.get_timepoints_list()
+
+            try:
+                state_list = np.reshape(state_list, (len(time_points), len(init_states[sim_idx])))
+
+
+            except(ValueError):
+                # print(len(state_list)/len(init_states[sim_idx]))
+                time_points = range(int(len(state_list) / len(init_states[sim_idx])))
+                state_list = np.reshape(state_list, (len(time_points), len(init_states[sim_idx])))
+
+            # state_list = state_list[40000:]
+            # time_points = time_points[40000:]
+
+            #  Settings for the recurrence plot
+            RR = 0.05
+            # Distance metric in phase space ->
+            # Possible choices ("manhattan","euclidean","supremum")
+            METRIC = "supremum"
+
+            #  Generate a recurrence plot object with fixed recurrence rate RR
+            rp = RecurrencePlot(state_list,
+                metric=METRIC, normalize=False, recurrence_rate=RR)
+            print(rp.recurrence_rate())
+            det = rp.determinism(l_min=2)
+            entropy = rp.diag_entropy(l_min=2)
+            rp_mat = rp.recurrence_matrix()
+            print(rp_mat)
+            print(det)
+            print(entropy)
+            out_path_template = self.out_dir + "Population_" + str(self.population_number) + "/simulation_plots/RQA" + "_batch_" + str(self.batch_num) + "_idx_#SIM_IDX#_sep.pdf"
+            out_path = out_path_template.replace('#SIM_IDX#', str(sim_idx))
+            fig = plt.figure()
+            plt.matshow()
+            plt.savefig(out_path, dpi=500)
+            plt.close()
+            plt.clf()
+
+
+    def plot_separation(self, model_refs, states, theta_states, params, pop_num, batch_num):
+        out_path_template = self.out_dir + "Population_" + str(self.population_number) + "/simulation_plots/Population_" + str(pop_num) + "_batch_" + str(batch_num) + "_idx_#SIM_IDX#_sep.pdf"
+
+        if len(model_refs) < self.n_sims_batch:
+            adjusted_sims_batch = len(model_refs)
+
+        else:
+            adjusted_sims_batch = self.n_sims_batch
+
+
+        # Simulate to attractor
+        pop_obj = population_modules.Population(adjusted_sims_batch, self.plot_t_0, self.plot_t_end,
+                                                     self.dt, states, params, model_refs,
+                                                     self.fit_species, self.abs_tol, self.rel_tol)
+
+        # Simulate to attractor
+        theta_pop_obj = population_modules.Population(adjusted_sims_batch, self.plot_t_0, self.plot_t_end,
+                                                     self.dt, theta_states, params, model_refs,
+                                                     self.fit_species, self.abs_tol, self.rel_tol)
+
+        pop_obj.generate_particles()
+        theta_pop_obj.generate_particles()
+
+        pop_obj.simulate_particles()
+        theta_pop_obj.simulate_particles()
+
+
+        for sim_idx in range(len(model_refs)):
+            state_list = pop_obj.get_particle_state_list(sim_idx)
+            theta_state_list = theta_pop_obj.get_particle_state_list(sim_idx)
+
+            n_species = len(states[sim_idx])
+
+            time_points = pop_obj.get_timepoints_list()
+
+            try:
+                state_list = np.reshape(state_list, (len(time_points), n_species))
+
+            except(ValueError):
+                # print(len(state_list)/len(init_states[sim_idx]))
+                idxs = range(int(len(state_list) / n_species))
+                state_list = np.reshape(state_list, (len(idxs), n_species))
+                time_points = time_points[:len(idxs)]
+
+
+            try:
+                theta_state_list = np.reshape(theta_state_list, (len(time_points), n_species))
+
+            except(ValueError):
+                # print(len(state_list)/len(init_states[sim_idx]))
+                idxs = range(int(len(theta_state_list) / n_species))
+                theta_state_list = np.reshape(theta_state_list, (len(idxs), n_species))
+                time_points = time_points[:len(idxs)]
+
+
+
+            model_ref = model_refs[sim_idx]
+            plot_species = self.fit_species
+
+            print("stat_list: ", np.shape(state_list))
+            print("theta_state_list: ", np.shape(theta_state_list))
+
+            # print(np.shape(time_points))
+            time_points = time_points[self.n_skip_plot:]
+            state_list = state_list[self.n_skip_plot:]
+            theta_state_list = theta_state_list[self.n_skip_plot:]
+
+            if len(state_list) < 1 or len(theta_state_list) < 1:
+                print("stat_list: ", np.shape(state_list))
+                print("theta_state_list: ", np.shape(theta_state_list))
+                return 0
+
+            elif len(state_list) != len(theta_state_list):
+                print("stat_list: ", np.shape(state_list))
+                print("theta_state_list: ", np.shape(theta_state_list))
+                return 0
+
+            else:
+                out_path = out_path_template.replace('#SIM_IDX#', str(sim_idx))
+                with PdfPages(out_path) as pdf:
+                    plotting.plot_separation(pdf, sim_idx, model_ref, state_list, theta_state_list, time_points)
+
+    def run_chaos_separation_model_selection_ABC_SMC(self, alpha=0.5):
         while not self.finished:
             folder_name = self.out_dir + "Population_" + str(self.population_number) + "/"
 
@@ -501,7 +628,6 @@ class ABC:
                         p.batch_idx = self.batch_num
                         p.sim_idx = sim_idx
 
-
                 else:
                     print("Sampling new population")
                     # Sample and perturb particles from previous population
@@ -512,6 +638,7 @@ class ABC:
 
                 end_time_sampling = time.time()
                 print("Particle sampling time elapsed: ", end_time_sampling - start_time_sampling)
+                
 
                 init_states = [copy.deepcopy(p.curr_init_state) for p in particles]
                 input_params = [copy.deepcopy(p.curr_params) for p in particles]
@@ -526,45 +653,76 @@ class ABC:
                                                              self.dt, init_states, input_params, model_refs,
                                                              self.fit_species, self.abs_tol, self.rel_tol)
 
-                # print("gen particles")
                 self.pop_obj.generate_particles()
-                # print("sim particles")
                 start_time_sim = time.time()
-
                 self.pop_obj.simulate_particles()
                 end_time_sim = time.time()
 
                 # print("Particle simulation time elapsed: ", end_time_sim - start_time_sim)
 
-                # 3. Calculate distances for population
-                self.pop_obj.calculate_particle_distances(self.distance_function_mode)
+                # 3. Calculate survival distances for population
+                self.pop_obj.calculate_particle_distances(2)
                 self.pop_obj.accumulate_distances()
 
                 batch_distances = self.pop_obj.get_flattened_distances_list()
                 batch_distances = np.reshape(batch_distances,
-                                             (self.n_sims_batch, len(self.fit_species), self.n_distances))
+                                 (self.n_sims_batch, len(self.fit_species), 1))
 
-                # 4. Accept or reject particles
-                if self.distance_function_mode != 1:
-                    batch_part_judgements = alg_utils.check_distances_generic(batch_distances,
-                                                                              epsilon_array=self.current_epsilon)
-                elif self.distance_function_mode == 1:
-                    batch_part_judgements = alg_utils.check_distances_osc(batch_distances,
-                                                                          epsilon_array=self.current_epsilon)
+                RQA_distances = self.get_RQA_distances(model_refs, init_states, self.population_number, self.batch_num, plot_RQA=True)
+                # RQA_distances = self.get_RQA_distances(sep_coeff_model_refs, sep_coeff_init_state, self.population_number, self.batch_num, plot_RQA=False)
+                
 
-                else:
-                    batch_part_judgements = None
-                    print("Invalid distance function set, quitting... ")
-                    exit()
+                # Extract state and params of surviving simulations
+                sep_coeff_init_state = []
+                sep_coeff_init_params = []
+                sep_coeff_model_refs = []
+                for sim_idx in range(len(model_refs)):
+                    final_vals = self.pop_obj.get_particle_final_species_values(sim_idx)
+                    sep_coeff_init_state.append(final_vals)
+                    sep_coeff_init_params.append(input_params[sim_idx])
+                    sep_coeff_model_refs.append(model_refs[sim_idx])
 
-                self.population_accepted_particle_distances += [part_d for part_d, judgement in
-                                                zip(batch_distances, batch_part_judgements)
-                                                if judgement]
+                separation_coefficients, init_theta_states = self.calculate_separtion_coeffs(sep_coeff_model_refs, sep_coeff_init_params, sep_coeff_init_state)
+                self.plot_separation(sep_coeff_model_refs, sep_coeff_init_state, init_theta_states, 
+                    sep_coeff_init_params, self.population_number, self.batch_num)
+
+                n_spaces = self.population_size - len(self.population_accepted_particles)
+
+
+                batch_part_judgements = [True for x in range(self.n_sims_batch)]
+
+                # If we have more accepted than spaces, set some to false
+                if n_spaces < sum(batch_part_judgements):
+                    num_trim = sum(batch_part_judgements) - n_spaces
+                    trimmed_judgements = []
+
+                    for judgement in batch_part_judgements:
+                        if judgement:
+                            if sum(trimmed_judgements) < n_spaces:
+                                trimmed_judgements.append(True)
+
+                            else:
+                                trimmed_judgements.append(False)
+                        else: 
+                            trimmed_judgements.append(False)
+
+                    batch_part_judgements = trimmed_judgements
 
                 accepted_particles = [p for p, judgement in zip(particles, batch_part_judgements) if judgement]
 
+                combined_distances = []
+                comp_exl_count = 0
+                for particle_idx, p in enumerate(particles):
+                    p_dist = list(np.concatenate( [batch_distances[particle_idx].reshape(-1), [separation_coefficients[particle_idx]], RQA_distances[particle_idx] ] )) * len(self.fit_species)
+                    p_dist = np.reshape(p_dist, (len(self.fit_species), -1))
+                    combined_distances.append(p_dist)
+
+                self.population_accepted_particle_distances += [part_d for part_d, judgement in
+                                                zip(combined_distances, batch_part_judgements)
+                                                if judgement]
 
                 self.population_accepted_particles = self.population_accepted_particles + accepted_particles
+                self.population_total_simulations += len(particles)
 
                 # print("Writing data")
                 self.write_epsilon(folder_name, self.current_epsilon)
@@ -573,15 +731,16 @@ class ABC:
                 start_time_write_distance = time.time()
 
                 if self.final_epsilon == self.current_epsilon:
+                    # self.plot_accepted_particles(folder_name, self.population_number, self.batch_num, batch_part_judgements, init_states, model_refs)
                     self.write_particle_distances(folder_name, model_refs, self.batch_num, self.population_number,
-                                                  batch_part_judgements, batch_distances, only_accepted=True)
+                                                  batch_part_judgements, combined_distances, only_accepted=True)
 
                 end_time_write_distance = time.time()
 
                 # print("Write distance time elapsed: ", end_time_write_distance - start_time_write_distance)
 
                 self.population_accepted_count += sum(batch_part_judgements)
-                self.population_total_simulations += len(model_refs)
+                # self.population_total_simulations += len(model_refs)
 
                 self.model_space.update_population_sample_data_v2(model_refs, batch_part_judgements)
 

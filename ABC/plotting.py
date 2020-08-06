@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 import matplotlib as mpl
+from mpl_toolkits.mplot3d import Axes3D
 
 plt.rcParams['figure.figsize'] = [15, 10]
 
@@ -37,8 +38,115 @@ def plot_simulation(out_pdf, sim_idx, model_ref, state, time_points, plot_specie
 
     # plt.axhline(0.001, ls='--')
     # plt.ylim(10**-4, 10**1.5)
-    plt.yscale('log')
+    # plt.yscale('log')
     plt.legend()
     plt.title(plt_title)
     out_pdf.savefig()
     plt.close()
+    plt.clf()
+
+def plot_separation(out_pdf, sim_idx, model_ref, sol, sol_theta, t, log_timeseries=False):
+    width_inches = 95*4 / 25.4
+    height_inches = 95*4 / 25.4
+    fig, axes = plt.subplots(figsize=(width_inches,height_inches), nrows=4, ncols=2)
+    plt_title = "Model idx: " + str(model_ref) + " Sim_idx: " + str(sim_idx)
+
+    species_0_min = np.min([np.min(sol[:, 0]), np.min(sol_theta[:, 0])])
+    species_1_min = np.min([np.min(sol[:, 1]), np.min(sol_theta[:, 1])])
+    species_2_min = np.min([np.min(sol[:, 2]), np.min(sol_theta[:, 2])])
+    species_3_min = np.min([np.min(sol[:, 3]), np.min(sol_theta[:, 3])])
+    
+    species_0_max = np.max([np.max(sol[:, 0]), np.max(sol_theta[:, 0])])
+    species_1_max = np.max([np.max(sol[:, 1]), np.max(sol_theta[:, 1])])
+    species_2_max = np.max([np.max(sol[:, 2]), np.max(sol_theta[:, 2])])
+    species_3_max = np.max([np.max(sol[:, 3]), np.max(sol_theta[:, 3])])
+
+    ax_row = axes[0]
+    # Plot time series
+    for idx, data in enumerate([sol, sol_theta]):
+        ax = ax_row[idx]
+        sns.lineplot(x=t, y=data[:, 0], ax=ax, estimator=None)
+        sns.lineplot(x=t, y=data[:, 1], ax=ax, estimator=None)
+        sns.lineplot(x=t, y=data[:, 2], ax=ax, estimator=None)
+        sns.lineplot(x=t, y=data[:, 3], ax=ax, estimator=None)
+
+        if log_timeseries:
+            ax.set_yscale('log')
+
+    ax_row = axes[1]
+
+    # Plot prey_1 predator phase
+    for idx, data in enumerate([sol, sol_theta]):
+        ax = ax_row[idx]
+        # sns.lineplot(x=data[:, 0], y=data[:, 2], ax=ax, estimator=None)
+        ax.plot(data[:, 0], data[:, 2])
+        x_min = species_0_min - 0.0001
+        x_max = species_0_max + 0.0001
+
+        y_min = species_2_min - 0.0001
+        y_max = species_2_max + 0.0001
+
+        ax.set_xlim([x_min, x_max])
+        ax.set_ylim([y_min, y_max])
+
+    ax_row = axes[2]
+    # Plot prey_2 predator phase
+
+    for idx, data in enumerate([sol, sol_theta]):
+        ax = ax_row[idx]
+        # sns.lineplot(x=data[:, 1], y=data[:, 2], ax=ax, estimator=None, ci=None)
+        ax.plot(data[:, 1], data[:, 2])
+        # ax.fill_between(data[:, 1], data[:, 2], color="red", alpha=0.3)
+        x_min = species_1_min - 0.0001
+        x_max = species_1_max + 0.0001
+
+        y_min = species_2_min - 0.0001
+        y_max = species_2_max + 0.0001
+        ax.set_xlim([x_min, x_max])
+        ax.set_ylim([y_min, y_max])
+
+    ax_row = axes[3]
+    # Plot prey_2 predator phase
+    for idx, data in enumerate([sol, sol_theta]):
+        ax = ax_row[idx]
+        # sns.lineplot(x=data[:, 1], y=data[:, 2], ax=ax, estimator=None, ci=None)
+        ax.plot(data[:, 2], data[:, 3])
+        # ax.fill_between(data[:, 1], data[:, 2], color="red", alpha=0.3)
+        x_min = species_2_min - 0.0001
+        x_max = species_2_max + 0.0001
+
+        y_min = species_3_min - 0.0001
+        y_max = species_3_max + 0.0001
+
+        ax.set_xlim([x_min, x_max])
+        ax.set_ylim([y_min, y_max])
+
+
+
+    for ax_row in axes:
+        for ax in ax_row:
+            ax.unicode_minus = True
+
+            ax.set_ylabel('')
+            # ax.set(xlim=(-0.5,None))
+            # ax.set(ylim=(-0))
+            ax.spines["right"].set_visible(False)
+            ax.spines["top"].set_visible(False)
+            ax.spines["left"].set_alpha(0.5)
+            ax.spines["bottom"].set_alpha(0.5)
+            # ax.tick_params(labelsize=15)
+            # ax.margins(x=0)
+            # ax.margins(y=0)
+
+    out_pdf.savefig()
+
+    # plt.title(str(sep_coeff))
+
+    for idx, data in enumerate([sol, sol_theta]):
+        fig, axes = plt.subplots(figsize=(width_inches,height_inches))
+        ax = Axes3D(fig)
+        ax.plot(data[:, 0], data[:, 1], data[:, 2])
+        out_pdf.savefig()
+        plt.close('all')
+        plt.clf()
+

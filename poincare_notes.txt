@@ -1,0 +1,30 @@
+https://en.wikipedia.org/wiki/Real_projective_space
+Real projective space is the topological space of lines passing through the origin in
+R^(n+1)
+e.g RP^(1) is a circle
+
+https://sci-hub.tw/https://www.sciencedirect.com/science/article/abs/pii/S0096300316307603#
+
+http://www.recurrence-plot.tk/rqa.php
+
+Recurrance plot:
+Repicts when a simulation revisits a state that it has been in, in the past.
+Time 0,0 line is always solid because comparing time zero and time zero, the state is the same
+
+2-5% of points should be recurrances? Used for setting the threshold
+
+The lengths of diagonal lines in an RP are directly related to the ratio of determinism or predictability inherent to the system. 
+
+Youtube video Using Recurrance Analysis to Examine Group Dynamics 28:52 onwards
+	Recurrence Rate - How intensely a system visits the same states over time
+	Proportion of points marked as an occurance. Continuous data this should be constrained to
+	a fixed rate to understand the plot structure. So, fix RR to 2-5%.
+
+	Determinisim - Assesses the degree to which a systems dynamics are predictable
+	Evident from the presence of diagonal lines parallel to the central diagonal.
+	DET is a measurement of the proportion of recurrent points that form these diagonal lines.
+	Requires a definition of how many points constitute a line
+
+	Entropy - How complex the deterministic structure is. High entropy implies complex patterns,
+	many diagonal lines of different lengths.
+

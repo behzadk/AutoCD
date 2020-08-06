@@ -1,0 +1,4 @@
+autocatalytic_t_1400.pdf
+	- Sim for 100 seconds
+	- Separation over 1400seconds
+	- Perturbation 10-3

@@ -62,9 +62,9 @@ def main():
         output_folder = experiment_config['output_folder']
         experiment_name = experiment_config['experiment_name']
 
-        t_0 = experiment_config['t_0']
-        t_end = experiment_config['t_end']
-        dt = experiment_config['dt']
+        t_0 = float(experiment_config['t_0'])
+        t_end = float(experiment_config['t_end'])
+        dt = float(experiment_config['dt'])
         fit_species = experiment_config['fit_species']
         final_epsilon = experiment_config['final_epsilon']
         initial_epsilon = experiment_config['initial_epsilon']
@@ -74,7 +74,8 @@ def main():
 
         distance_function_mode = experiment_config['distance_function_mode']
         run_rejection = experiment_config['run_rejection']
-        run_SMC = experiment_config['run_SMC']
+        run_chaos_separation  =experiment_config['run_chaos_separation']
+        # run_SMC = experiment_config['run_SMC']
 
         compress_output = experiment_config['compress_output']
 
@@ -127,7 +128,19 @@ def main():
     if run_rejection == "Y":
         ABC_algs.current_epsilon = final_epsilon
 
-    ABC_algs.run_model_selection_ABC_SMC(alpha=alpha)
+    if run_chaos_separation == "Y":
+        ABC_algs.sep_length = int(experiment_config['separation_length'])
+        ABC_algs.n_skip = int(experiment_config['n_skip'])
+        
+        ABC_algs.n_skip_plot = int(experiment_config['n_skip_plot'])
+        ABC_algs.plot_t_0 = int(experiment_config['plot_t_0'])
+        ABC_algs.plot_t_end = int(experiment_config['plot_t_end'])
+
+        ABC_algs.theta_0 = float(experiment_config['theta_0'])
+        ABC_algs.run_chaos_separation_model_selection_ABC_SMC(alpha=alpha)
+
+    else:
+        ABC_algs.run_model_selection_ABC_SMC(alpha=alpha)
 
     copy(config_yaml_path, exp_output_folder)
 

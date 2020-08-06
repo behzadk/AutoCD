@@ -7,7 +7,7 @@
 typedef std::vector<std::vector<std::vector<double>>> PopDistances;
 class Population {
 	public:
-		Population(const int, const int, const int, 
+		Population(const int, const float, const float, 
 			const float, boost::python::list, boost::python::list, boost::python::list, boost::python::list, double, double);
 
 		std::vector< std::vector<double> > unpack_parameters(boost::python::list);
@@ -47,8 +47,8 @@ class Population {
 
 	private:
 		int _n_sims;
-		int  _t_0;
-		int _t_end;
+		float  _t_0;
+		float _t_end;
 		float _dt;
 		int _distance_function_mode;
 		double _abs_tol;

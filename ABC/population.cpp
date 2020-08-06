@@ -36,8 +36,8 @@ using namespace boost::python;
  *  \param abs_tol absolute tolerance for ODE error stepper
  *  \param rel_tol relative tolerance for ODE error stepper
 */
-Population::Population(const int n_sims, const int t_0, 
-    const int t_end, const float dt, boost::python::list state_init_list,
+Population::Population(const int n_sims, const float t_0, 
+    const float t_end, const float dt, boost::python::list state_init_list,
     boost::python::list params_list, boost::python::list model_ref_list, boost::python::list py_fit_species, double abs_tol, double rel_tol)
 {
 
@@ -363,8 +363,8 @@ BOOST_PYTHON_MODULE(population_modules)
 	class_<PopDistances>("pop_dist_vec")
 		.def(boost::python::vector_indexing_suite<PopDistances>());
 
-    class_<Population>("Population", init<const int, const int, 
-    const int, const float, boost::python::list, boost::python::list, boost::python::list, boost::python::list, double, double>())
+    class_<Population>("Population", init<const int, const float, 
+    const float, const float, boost::python::list, boost::python::list, boost::python::list, boost::python::list, double, double>())
     	.def("generate_particles", &Population::generate_particles)
     	.def("simulate_particles", &Population::simulate_particles)
     	.def("calculate_particle_distances", &Population::calculate_particle_distances)
