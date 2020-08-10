@@ -13,6 +13,6 @@ $ABC_folder/distances.cpp \
 $ABC_folder/population.cpp \
 $ABC_folder/kissfft/kiss_fft.c \
 $ABC_folder/kissfft/kiss_fftr.c \
--lboost_system -lboost_python3-py36 \
+-lboost_system -lboost_python36 \
 -I/usr/include/python3.6m/ \
 -I ${inputs_folder}

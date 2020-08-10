@@ -3,3 +3,5 @@ venv/
 *.pyo
 .idea/
 output/
+ABC/population_modules.so
+ABC_input_files/*/population_modules.so
