@@ -212,11 +212,7 @@ def get_flat_adjacency_matricies_df(model_indexes, adj_matrix_path_template):
         adj_mat_path = adj_matrix_path_template.replace("#REF#", str(m_idx))
         adj_mat_df = pd.read_csv(adj_mat_path, index_col=0)
 
-        print(adj_mat_df)
         adj_mat_df = convert_QS_column(adj_mat_df)
-        print(adj_mat_df)
-        print(np.shape(adj_mat_df))
-        exit()
         flat_adj_mats.append(abs(adj_mat_df.values).flatten())
     
     interaction_indexes = ["a_" + str(i) for i in range(np.shape(flat_adj_mats)[1])]
@@ -236,9 +232,6 @@ def get_flat_adjacency_matricies_df(model_indexes, adj_matrix_path_template):
         if np.max(adj_mat_df[col]) == np.min(adj_mat_df[col]):
             adj_mat_df = adj_mat_df.loc[:, adj_mat_df.columns != col]
 
-
-    print(np.shape(adj_mat_df))
-    exit()
 
     return adj_mat_df
 
@@ -744,34 +737,6 @@ def make_hierarchical_clustering(combined_analysis_output_dir, adj_mat_dir, drop
     plt.savefig(output_path, dpi=500, bbox_inches='tight', transparent=False)
     plt.close()
 
-    # print("Making posterior probability heatmap")
-    # # Plot with posterior probability as heatmap
-    # adj_mat_df['p_prob'] = model_space_report_df['model_marginal_mean'].values
-    # linkage_data = adj_mat_df.loc[:, adj_mat_df.columns != 'p_prob'].values
-    # linkage = hc.linkage(sp.distance.pdist(linkage_data), method='average', metric='euclidean')
-    # cm = sns.clustermap(data=adj_mat_df['p_prob'], row_linkage=linkage, col_cluster=False, yticklabels=1)
-    # pprob_row_colours = cm.row_colors
-    # hm = cm.ax_heatmap.get_position()
-    # cm.ax_heatmap.set_position([int_link_x, int_link_y0, int_link_width*0.1, int_link_height])
-    
-    # # cm.ax_heatmap.set(yticklabels=[])
-    # # cm.ax_heatmap.set(xticklabels=[])
-
-    # # cm.ax_heatmap.set(xlabel='')
-    # # cm.ax_heatmap.set(ylabel='')
-    # cm.ax_heatmap.tick_params(left=False, bottom=False, right=False)
-
-    # col = cm.ax_col_dendrogram.get_position()
-    # cm.ax_heatmap.tick_params(left=False, bottom=False, right=False)
-
-    # cm.ax_row_dendrogram.set_visible(False)
-    # cm.cax.set_visible(False)
-
-    # plt.setp(cm.ax_heatmap.yaxis.get_majorticklabels(), rotation=0)
-
-    # output_path = combined_analysis_output_dir + "pprob_dendrogram_" + str(max_level) + ".pdf"
-    # plt.savefig(output_path, dpi=500, bbox_inches='tight', transparent=True)
-    # plt.close()
 
 
     print("Making posterior probability barchart")
@@ -994,15 +959,6 @@ def main():
     for levels in [5]:
         make_hierarchical_clustering(combined_analysis_output_dir, adj_mat_dir, drop_eqless=-1, hide_x_ticks=True, max_level=levels, use_bar=True, plot_error=False, average_clusters=True, log_scale=True)
 
-    exit()
-    make_model_network(combined_analysis_output_dir, adj_mat_dir, use_adjacent_neighbour=True)
-    exit()
-    exit()
-    exit()
-    make_model_network(combined_analysis_output_dir, adj_mat_dir, use_nearest_neighbour=True)
-
-    make_model_network(combined_analysis_output_dir, adj_mat_dir, use_adjacent_neighbour=True, colour_by_motif=True)
-    make_model_network(combined_analysis_output_dir, adj_mat_dir, use_nearest_neighbour=True, colour_by_motif=True)
 
 if __name__ == "__main__":
     main()

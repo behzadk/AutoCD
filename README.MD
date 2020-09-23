@@ -4,7 +4,9 @@ Automated equation generation of candidate models for synthetic microbial commun
 AutoCD builds a equations for candidate model systems that can simulate the growth of bacteria capturing important interactions such as competition for nutrients, communication through quorum sensing and amensalism via bacteriocins. AutoCD performs model selection for a desired population level behaviour. AutoCD is intended to aide in the design of synthetic microbial systems, identfying promising candidate network topologies and essential parameters for controlling a microbial community.
 
 
-AutoCD is written in C++ and Python 3.4+, data analysis scripts require R. This has been tested on Linux only.
+AutoCD is written in C++ and Python 3.4+, data analysis scripts require R. 
+
+This software has been tested on Linux and designed for HPC, using OpenMP for parallel simulations.
 
 ## Requirements
 
@@ -17,7 +19,7 @@ g++ (tested with g++-8)
 Boost >=  v1.67
 OpenMP
 
-Boost must be installed for the version of python being used to run AutoCD. Ensure boost has been correvtly added to paths. Run `build_test.sh` to test on a simple build example and identify issues with library flags and ensuring the correct Python includes. Changes should be made to `build_pop_modules.sh` which is used to the build necessarry Boost Python libarary for a newly generated model space.
+Boost must be installed for the version of python being used to run AutoCD. Ensure boost has been correctly added to paths. Run `build_test.sh` to test on a simple build example and identify issues with library flags and ensuring the correct Python includes. Changes should be made to `build_pop_modules.sh` which is used to the build necessary Boost Python libarary for a newly generated model space.
 
 #### R packages: ####
 ggplot2, ggisoband, gridExtra, sm

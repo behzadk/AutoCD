@@ -354,8 +354,8 @@ def nmf_decomposition(output_dir, adj_mat_dir, n_components=4):
     write_W_to_csv(W, model_idxs, W_csv_path)
 
     H = model.components_
-    H = H.reshape(n_components, 9, 11)
-    # H = H.reshape(i, 7, 9)
+    # H = H.reshape(n_components, 9, 11)
+    H = H.reshape(n_components, 7, 9)
 
     H_csv_path = figure_output_dir +  "H_" + str(n_components) + ".csv"
     write_H_to_csv(H, H_csv_path, row_names, column_names, normalise=True)

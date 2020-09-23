@@ -46,6 +46,19 @@ def main():
             experiment_config = yaml.load(yaml_file, Loader=yaml.FullLoader)
 
         module_path = experiment_config['population_modules_path']
+        if os.path.isfile(module_path) and os.access(module_path, os.R_OK):
+            print("population.modules.so exists...")
+
+        else:
+            print("population.modules.so missing, attempting to build... ")
+            build_file_path = "./build_pop_modules.sh"
+            build_arguments = MSG_config['output_dir'] + MSG_config['model_space_name'] + '/'
+
+            # Call build for C++ modules, first argument
+            # pointing to where model.cpp and model.h are
+            subprocess.check_call([build_file_path, build_arguments])
+
+
         # Copy population_modules.so to ABC folder
         copy(module_path, './ABC/')
 

@@ -722,9 +722,6 @@ output_dir <- args[5]
 make_1d_plot <- args[6]
 make_2d_plot <- args[7]
 
-# wd <- "/home/behzad/Documents/barnes_lab/cplusplus_software/speed_test/repressilator/cpp/"
-# data_dir <- paste(wd, "output/spock_manu_stable_1_SMC/spock_manu_stable_1_SMC_a1/Population_2/model_sim_params/", sep="")
-# inputs_data_dir <- paste(wd, "input_files/input_files_two_species_spock_manu_1/input_files/", sep="")
 
 data_df <- read.csv(params_posterior_path)
 
