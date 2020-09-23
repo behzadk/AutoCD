@@ -682,8 +682,8 @@ class model_space():
 
             if keep_model == True:
                 keep_list.append(model)
-
-        return keep_list
+        
+        self.models_list = keep_list
 
     def generate_model_reference_table(self, max_microcin_parts, max_AHL_parts,
                                        max_substrate_dependencies, max_microcin_sensitivities):

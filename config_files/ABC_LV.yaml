@@ -6,7 +6,7 @@ output_folder: './output/'
 # Start time, end time, time interval
 t_0: 0
 t_end: 1000
-dt: 0.1
+dt: 0.01
 
 final_epsilon:
   - 100000
@@ -19,11 +19,11 @@ fit_species:
 initial_epsilon:
   - 1e250
 
-abs_tol: 1e-25
-rel_tol: 1e-9
+abs_tol: 1e-9
+rel_tol: 1e-4
 
-population_size: 25
-n_sims_batch: 10
+population_size: 10000
+n_sims_batch: 25
 
 alpha: 0.5
 
@@ -36,10 +36,22 @@ distance_function_mode: 2
 # Choose which algorithm to run
 run_rejection: Y
 run_chaos_separation: Y
-separation_length: 1000
-theta_0: 1e-5
-n_skip: 900
-n_skip_plot: 9800
+
+# Number of steps (length of dt) to take and calculate separation
+separation_length: 10000
+
+# Initial perturbation
+theta_0: 1e-4
+
+# Number of timepoints to skip before calculating separation and RQA metrics
+n_skip: 5000
+
+# Number of timepoints to skip before plotting
+# Start time, end time, time interval
+plot_t_0: 0
+plot_t_end: 1000
+n_skip_plot: 0
+
 # Whether to compress output of ABC SMC, will produce a .tar file containing output,
 # it will not delete the directory containing the original information.
 compress_output: Y

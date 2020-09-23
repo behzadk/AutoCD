@@ -253,11 +253,11 @@ class Model:
             if param[0] == param[1]:
                 self._params_prior[param_id].append('constant')
 
-            # if abs(np.log10(param[0]) - np.log10(param[1])) > log_decimals:
-            elif (param[0] < 1e-4 and param[0] != 0) or (param[0] > 1e4):
-                self._params_prior[param_id].append('log')
-                self._params_prior[param_id][0] = np.log(self._params_prior[param_id][0])
-                self._params_prior[param_id][1] = np.log(self._params_prior[param_id][1])
+            # # if abs(np.log10(param[0]) - np.log10(param[1])) > log_decimals:
+            # elif (param[0] < 1e-4 and param[0] != 0) or (param[0] > 1e4):
+            #     self._params_prior[param_id].append('log')
+            #     self._params_prior[param_id][0] = np.log(self._params_prior[param_id][0])
+            #     self._params_prior[param_id][1] = np.log(self._params_prior[param_id][1])
 
             else:
                 self._params_prior[param_id].append('uniform')
@@ -380,11 +380,13 @@ class Model:
         for idx, id in enumerate(sorted(self._params_prior, key=str.lower)):
             lwr_bound = self._params_prior[id][0]
             upr_bound = self._params_prior[id][1]
+
             param_val = np.random.uniform(lwr_bound, upr_bound)
 
             sim_params.append(param_val)
 
         return sim_params
+
 
     ## Samples particle initial species state belonging to this model.
     # initial species are always sampled uniformally from the prior

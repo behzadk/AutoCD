@@ -1,0 +1,57 @@
+experiment_name: rossler_chaos_0
+population_modules_path: './ABC_input_files/input_files_rosslerchaos/population_modules.so'
+inputs_folder: './ABC_input_files/input_files_rosslerchaos/input_files/'
+output_folder: './output/'
+
+# Start time, end time, time interval
+t_0: 0
+t_end: 500
+dt: 0.001
+
+final_epsilon:
+  - 10000000000000
+
+fit_species:
+  - 0
+  - 1
+  - 2
+
+initial_epsilon:
+  - 1e250
+
+abs_tol: 1e-8
+rel_tol: 1e-4
+
+population_size: 5
+n_sims_batch: 5
+
+alpha: 0.5
+
+## Distance options
+# 0: stable steady state
+# 1: oscillations
+# 2: survival
+distance_function_mode: 2
+
+# Choose which algorithm to run
+run_rejection: Y
+run_chaos_separation: Y
+
+# Number of steps (length of dt) to take and calculate separation
+separation_length: 1000000
+
+# Initial perturbation
+theta_0: 1e-5
+
+# Number of timepoints to skip before calculating separation
+n_skip: 1000
+
+# Number of timepoints to skip before plotting
+plot_t_0: 0
+plot_t_end: 1000
+n_skip_plot: 25
+
+
+# Whether to compress output of ABC SMC, will produce a .tar file containing output,
+# it will not delete the directory containing the original information.
+compress_output: Y

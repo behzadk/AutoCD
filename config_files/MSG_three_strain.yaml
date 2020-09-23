@@ -39,6 +39,9 @@ bacteriocin_induced: True
 bacteriocin_repressed: True
 bacteriocin_constitutive: False
 
+use_one_pred_two_prey_filter: False
+
+
 ## Set part combination limits
 # These include limits to the extenent a single strain can be engineered
 strain_max_bacteriocin: 1 # Maximum number of bacteriocin that can be expressed by a single strain

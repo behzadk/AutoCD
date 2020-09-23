@@ -109,6 +109,8 @@ def main():
     # Load models from input files
     model_list = []
     for i in range(int((len(os.listdir(input_folder)) / 2))):
+        # if i != 307:
+        #     continue
         input_params = input_folder + "params_" + str(i) + ".csv"
         input_init_species = input_folder + "species_" + str(i) + ".csv"
         init_params = import_input_file(input_params)
@@ -116,6 +118,7 @@ def main():
 
         model_new = Model(i, init_params, init_species)
         model_list.append(model_new)
+
 
     # Run ABC_rejection algorithm
     ABC_algs = algorithms.ABC(t_0, t_end, dt, exp_num=exp_num, model_list=model_list, population_size=population_size,
@@ -145,5 +148,7 @@ def main():
     copy(config_yaml_path, exp_output_folder)
 
     if compress_output == "Y":
-        alg_utils.make_tarfile(exp_output_folder[0:-1] + "_pop_" + str(ABC_algs.population_number) + ".tar.gz",
-                               exp_output_folder)
+        print(output_folder + experiment_name + "_pop_" + str(ABC_algs.population_number) + ".tar.gz")
+        sys.stdout.flush()
+        alg_utils.make_tarfile(output_folder + experiment_name + "_pop_" + str(ABC_algs.population_number) + "_exp_" + str(exp_num)  + ".tar.gz", exp_output_folder)
+        print(exp_output_folder[0:-1] + "_pop_" + str(ABC_algs.population_number) + ".tar.gz")

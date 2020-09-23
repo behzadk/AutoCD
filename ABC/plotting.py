@@ -15,6 +15,7 @@ def plot_simulation(out_pdf, sim_idx, model_ref, state, time_points, plot_specie
 
     if error_msg is not None and error_msg is not np.nan and error_msg is not "":
         plt_title = plt_title + " error: " + error_msg
+        return 0
 
         # for col in range(np.shape(state)[1]):
         #     print(col)
@@ -38,7 +39,7 @@ def plot_simulation(out_pdf, sim_idx, model_ref, state, time_points, plot_specie
 
     # plt.axhline(0.001, ls='--')
     # plt.ylim(10**-4, 10**1.5)
-    # plt.yscale('log')
+    # plt.yscale('symlog')
     plt.legend()
     plt.title(plt_title)
     out_pdf.savefig()

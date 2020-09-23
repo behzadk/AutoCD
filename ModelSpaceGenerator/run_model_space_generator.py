@@ -20,6 +20,8 @@ def main():
     parser.add_argument('--DA_config', type=str)
     parser.add_argument("--exp_num", required=False, default=0)
 
+
+
     args = parser.parse_args()
 
     config_yaml_path = args.MSG_config
@@ -29,6 +31,7 @@ def main():
 
     # Set strain IDs
     strain_ids = experiment_config['strain_ids']
+    use_one_pred_two_prey_filter = experiment_config['use_one_pred_two_prey_filter']
 
     # Set substrate parts
     substrate_ids = experiment_config['substrate_ids']
@@ -112,6 +115,9 @@ def main():
 
     print("Removing indirect symmeteries... \n")
     model_space.remove_indirect_symmetries()
+
+    if use_one_pred_two_prey_filter:
+        model_space.one_predator_two_prey_filter()
 
     # model_space.remove_symmetries()
     print("Total number of models: ", len(model_space.models_list))

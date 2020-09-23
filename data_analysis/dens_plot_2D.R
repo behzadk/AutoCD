@@ -758,8 +758,6 @@ for (name in names(accepted_df)) {
 
 dummy_true_val_vector <- rep(0.8,  dim(accepted_df)[2])
 
-
-
 name_prefix <- paste("model_", toString(model_idx), sep="")
 
 output_name <- paste(name_prefix, "_2D_corr_coeff.csv", sep="")
@@ -772,7 +770,7 @@ if (make_1d_plot) {
 	plot_1d_one_pop(accepted_df, weights, to_cut, param_lims, output_path, dummy_true_val_vector)
 }
 
-if (make_2d_plot){
+if (make_2d_plot) {
 	output_name <- paste(name_prefix, "_2D_dens.pdf", sep="")
 	output_path <-  paste(output_dir, output_name, sep="")
 	plot_dens_2d_one_pop(accepted_df, weights, to_cut, param_lims, output_path, dummy_true_val_vector)

@@ -56,6 +56,7 @@ void DistanceFunctions::fft_freq(double * results, int n, float step_size) {
     }
 }
 
+
 /*! \brief Returns the period frequency of a signal
  *  \param signal vector of the signal to be anaylsed
  *	\param dt float of the time step used in the simulation

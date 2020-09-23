@@ -60,9 +60,9 @@ struct simulation_observer
         bool negative_species = false;
 
         // for (auto it = m_fit_species.begin(); it != m_fit_species.end(); it++) {
-        //     if(x(*it) < 1e-20) {
-        //         species_decayed = true;
-        //     }
+        //     // if(x(*it) < 1e-20) {
+        //     //     species_decayed = true;
+        //     // }
         // }
 
         // //Test
@@ -78,10 +78,11 @@ struct simulation_observer
 
         for(int i = 0; i < x.size(); i++){
             double val = x(i);
+            // std::cout << val << std::endl;
 
-            // if (val < 1e-200) {
-            //     species_decayed = true;
-            // }
+            if (val < 1e-4) {
+                species_decayed = true;
+            }
 
             if(val < 0) {
                 negative_species = true;
@@ -185,6 +186,7 @@ boost::python::list Particle::py_model_func(boost::python::list input_y)
 {
     
     int n_species = state_init.size();
+    std::cout << n_species << std::endl;
     ublas_vec_t y(n_species);
 
     // Load python data into ublas vector
@@ -261,12 +263,17 @@ boost::python::list Particle::get_jacobian(boost::python::list input_y)
 
     // Init matrix n_species x n_species
     ublas_mat_t J (n_species, n_species);
+    ublas_vec_t dxdt (n_species);
 
     // Not sure why this is necessary
     ublas_vec_t dfdt(n_species);
 
     // Dummy values
     const double t = 0;
+    // double t_model = 0;
+
+    // // Get diff
+    // m.run_model_ublas(y, dxdt, t_model, part_params, model_ref);
 
     // Fill jacobian matrix
     m.run_jac(y, J, t, dfdt, part_params, model_ref);
@@ -377,6 +384,8 @@ boost::python::list Particle::get_state_pylist() {
     }
     return sol;
 }
+
+
 
 /*! \brief Gets vector of states from particle simulation. 
 * Returns vector containing the state list of a simulated particle
