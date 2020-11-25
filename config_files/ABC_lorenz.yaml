@@ -6,7 +6,7 @@ output_folder: './output/'
 # Start time, end time, time interval
 t_0: 0
 t_end: 500
-dt: 0.001
+dt: 0.0001
 
 final_epsilon:
   - 10000000000000
@@ -19,11 +19,11 @@ fit_species:
 initial_epsilon:
   - 1e250
 
-abs_tol: 1e-8
+abs_tol: 1e-4
 rel_tol: 1e-4
 
-population_size: 10
-n_sims_batch: 5
+population_size: 1
+n_sims_batch: 1
 
 alpha: 0.5
 
@@ -44,7 +44,7 @@ separation_length: 1000000
 theta_0: 1e-5
 
 # Number of timepoints to skip before calculating separation
-n_skip: 450000
+n_skip: 1000
 
 # Number of timepoints to skip before plotting
 plot_t_0: 0

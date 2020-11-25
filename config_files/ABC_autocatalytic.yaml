@@ -1,11 +1,11 @@
-experiment_name: autocat_3_rej
+experiment_name: autocat_chaos_sim_rej
 population_modules_path: './ABC_input_files/input_files_autocatalytic/population_modules.so'
 inputs_folder: './ABC_input_files/input_files_autocatalytic/input_files/'
 output_folder: './output/'
 
 # Start time, end time, time interval
 t_0: 0
-t_end: 1000
+t_end: 100
 dt: 0.01
 
 final_epsilon:
@@ -45,7 +45,7 @@ initial_epsilon:
 abs_tol: 1e-9
 rel_tol: 1e-4
 
-population_size: 10000
+population_size: 1
 n_sims_batch: 1
 
 alpha: 0.5

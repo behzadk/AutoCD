@@ -387,7 +387,6 @@ class Model:
 
         return sim_params
 
-
     ## Samples particle initial species state belonging to this model.
     # initial species are always sampled uniformally from the prior
     # @param init_species list of initial species values sampled uniformally from the prior
@@ -458,6 +457,7 @@ class ModelSpace:
             accepted_weights = []
 
             for idx, particle in enumerate(accepted_particles):
+
                 if particle.prev_model._model_ref is m._model_ref:
                     accepted_params.append(particle.prev_params)
                     accepted_init_states.append(particle.prev_init_state)
@@ -519,6 +519,86 @@ class ModelSpace:
             particles.append(new_particle)
 
         return particles
+
+    def sample_particles_from_csv(self, n_sims, model_idx, csv_path):
+        df = pd.read_csv(csv_path)
+
+        # # Sample rows
+        random_sample = df.sample(n=n_sims)
+        particles = []
+
+        for row_idx, row in random_sample.iterrows():
+            # model_idx = row['model_idx']
+
+            new_particle = Particle(self._model_list[0])
+
+            sim_params = []
+            for idx, id in enumerate(sorted(new_particle.curr_model._params_prior, key=str.lower)):
+                sim_params.append(row[id])
+
+            new_particle.curr_params = sim_params
+
+            init_state = []
+            for idx, s in enumerate(new_particle.curr_model._init_species_prior):
+                init_state.append(row[s])
+
+            new_particle.curr_init_state = init_state
+            particles.append(new_particle)
+
+        return particles
+
+    def sample_particles_from_ordered_csv(self, n_sims, total_sims, csv_path):
+        df = pd.read_csv(csv_path)
+        df.sort_values(by='d1', inplace=True, ascending=False)
+        particles = []
+
+        for sim in range(n_sims):
+            row = df.iloc[[sim + total_sims]]
+            model_idx = row['model_ref'].values[0]
+            print(model_idx)
+            new_particle = Particle(self._model_list[model_idx])
+
+            sim_params = []
+            for idx, id in enumerate(sorted(new_particle.curr_model._params_prior, key=str.lower)):
+                sim_params.append(row[id].values[0])
+
+            new_particle.curr_params = sim_params
+
+            init_state = []
+            for idx, s in enumerate(new_particle.curr_model._init_species_prior):
+                init_state.append(row[s].values[0])
+
+            new_particle.curr_init_state = init_state
+            particles.append(new_particle)
+
+        return particles
+
+
+    def sample_init_states_from_csv(self, csv_path):
+        df = pd.read_csv(csv_path)
+        particles = []
+
+        for sim in range(len(df)):
+            row = df.iloc[[sim]]
+            model_idx = row['model_ref'].values[0]
+            new_particle = Particle(self._model_list[model_idx])
+
+            sim_params = []
+            for idx, id in enumerate(sorted(new_particle.curr_model._params_prior, key=str.lower)):
+                sim_params.append(row[id].values[0])
+
+            new_particle.curr_params = sim_params
+
+            init_state = []
+            for idx, s in enumerate(new_particle.curr_model._init_species_prior):
+                init_state.append(row[s].values[0])
+
+            new_particle.curr_init_state = init_state
+            particles.append(new_particle)
+
+        return particles
+
+
 
     ## Samples n particles previous population with perturbation
     # Previous population contains accepted particles, these are sampled based on the model marginal

@@ -80,13 +80,13 @@ struct simulation_observer
             double val = x(i);
             // std::cout << val << std::endl;
 
-            if (val < 1e-4) {
+            if (val < 1e-5) {
                 species_decayed = true;
             }
 
-            if(val < 0) {
-                negative_species = true;
-            };
+            // if(val < 0) {
+            //     negative_species = true;
+            // };
 
             new_state.push_back(val);
 
@@ -98,6 +98,8 @@ struct simulation_observer
 
     }
 };
+
+
 
 /*! \brief Particle to be simulated.
 *   
@@ -160,6 +162,9 @@ void Particle::simulate_particle_rosenbrock(std::vector<double> time_points, dou
 {
     auto rosen_stepper = rosenbrock4_controller< rosenbrock4< double > >( abs_tol , rel_tol);
 
+    typedef runge_kutta_dopri5< state_type > stepper;
+    // auto rkd_stepper = make_dense_output<stepper>(abs_tol, rel_tol, rkd);
+
     max_step_checker mx_step = max_step_checker(1e5);
 
     double dt = time_points[1] - time_points[0];
@@ -169,9 +174,18 @@ void Particle::simulate_particle_rosenbrock(std::vector<double> time_points, dou
         dt = dt * -1;
     }
 
-    integrate_times(  rosen_stepper, 
+    // integrate_const(  make_dense_output<stepper>(abs_tol, rel_tol), 
+    //     boost::ref( *this ), 
+    //     state_init , 0.0, 100.0, 0.01);
+
+
+    // integrate_times(  rosen_stepper, 
+    //     make_pair(boost::ref( *this ), boost::ref( *this )) , 
+    //     state_init , time_points.begin(), time_points.end() , dt, simulation_observer(state_vec, rosen_stepper, fit_species), mx_step);
+
+    integrate_const(  rosen_stepper, 
         make_pair(boost::ref( *this ), boost::ref( *this )) , 
-        state_init , time_points.begin(), time_points.end() , dt, simulation_observer(state_vec, rosen_stepper, fit_species), mx_step);
+        state_init , time_points.front(), time_points.back(), dt, simulation_observer(state_vec, rosen_stepper, fit_species), mx_step);
 }
 
 /*! \brief Python compatible model function

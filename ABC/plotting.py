@@ -10,8 +10,8 @@ font = {'size': 30, }
 axes = {'labelsize': 'medium', 'titlesize': 'medium'}
 
 
-def plot_simulation(out_pdf, sim_idx, model_ref, state, time_points, plot_species_idx, error_msg=None):
-    plt_title = "Model idx: " + str(model_ref) + " Sim_idx: " + str(sim_idx)
+def plot_simulation(out_pdf, sim_idx, model_ref, state, time_points, plot_species_idx, judgement, max_LE, error_msg=None):
+    plt_title = "Model idx: " + str(model_ref) + " Sim_idx: " + str(sim_idx) + "Accepted: " + str(judgement) + "MLE: " + str(np.around(max_LE, 4))
 
     if error_msg is not None and error_msg is not np.nan and error_msg is not "":
         plt_title = plt_title + " error: " + error_msg
@@ -31,16 +31,32 @@ def plot_simulation(out_pdf, sim_idx, model_ref, state, time_points, plot_specie
     # plt.rcParams['text.usetex'] = True
     plt.rcParams['axes.unicode_minus'] = False
 
-    fig = plt.figure()
+    plot_skip = int(len(time_points) * 0.1)
+    width_inches = 95*4 / 25.4
+    height_inches = 51*4 / 25.4
+
+    fig, ax = plt.subplots(figsize=(width_inches, height_inches))
     for i in plot_species_idx:
-        sns.lineplot(x=time_points, y=state[:, i], label=str(i))
+        sns.lineplot(x=time_points[plot_skip:], y=state[:, i][plot_skip:], label=str(i))
         # print("max: ", np.max(state[:, i]))
         # print("min: ", np.min(state[:, i]))
+
 
     # plt.axhline(0.001, ls='--')
     # plt.ylim(10**-4, 10**1.5)
     # plt.yscale('symlog')
-    plt.legend()
+
+    ax.get_legend().remove()
+
+    ax.spines["right"].set_visible(False)
+    ax.spines["top"].set_visible(False)
+    ax.spines["left"].set_alpha(0.5)
+    ax.spines["bottom"].set_alpha(0.5)
+    ax.tick_params(labelsize=15)
+    # ax.margins(x=0)
+    # ax.margins(y=0)
+    fig.tight_layout()
+
     plt.title(plt_title)
     out_pdf.savefig()
     plt.close()
@@ -151,3 +167,77 @@ def plot_separation(out_pdf, sim_idx, model_ref, sol, sol_theta, t, log_timeseri
         plt.close('all')
         plt.clf()
 
+
+def plot_lorenz(out_pdf, sim_idx, model_ref, state, time_points, plot_species_idx, error_msg=None):
+    colours = ['#e30b17', '#1d71b8', '#73ba65', '#ac7cb5', '#706f6f']
+    sns.set_context("talk")
+    sns.set_style("white")
+
+
+    width_inches = 95*4 / 25.4
+    height_inches = 51*4 / 25.4
+
+    plot_skip = int(len(time_points) * 0.1)
+
+
+    fig = plt.figure(figsize=(width_inches, height_inches))
+    ax = fig.gca(projection='3d')
+    ax.plot(state[:, 0][plot_skip:], state[:, 1][plot_skip:], state[:, 2][plot_skip:], color=colours[1])
+    ax.tick_params(labelsize=0)
+    ax.set(xticklabels=[])
+    ax.set(xlabel='')
+
+    ax.set(yticklabels=[])
+    ax.set(ylabel='')
+    ax.set(zticklabels=[])
+    ax.set(zlabel='')
+
+    fig.tight_layout()
+
+    out_pdf.savefig()
+    plt.close()
+    plt.clf()
+
+def plot_LV_four_species(out_pdf, sim_idx, model_ref, state, time_points, plot_species_idx, error_msg=None):
+    colours = ['#e30b17', '#1d71b8', '#73ba65', '#ac7cb5', '#706f6f']
+    sns.set_context("talk")
+    sns.set_style("white")
+
+
+    width_inches = 95*4 / 25.4
+    height_inches = 51*4 / 25.4
+
+    fig, ax = plt.subplots(figsize=(width_inches, height_inches))
+    plot_skip = int(len(time_points) * 0.1)
+    ax.plot(state[:, 0][plot_skip:], state[:, 1][plot_skip:], label=str(0))
+   
+    out_pdf.savefig()
+    plt.close()
+
+    fig, ax = plt.subplots(figsize=(width_inches, height_inches))
+    plot_skip = int(len(time_points) * 0.1)
+    ax.plot(state[:, 1][plot_skip:], state[:, 2][plot_skip:], label=str(0))
+   
+    out_pdf.savefig()
+    plt.close()
+
+
+    fig, ax = plt.subplots(figsize=(width_inches, height_inches))
+    plot_skip = int(len(time_points) * 0.1)
+    ax.plot(state[:, 2][plot_skip:], state[:, 3][plot_skip:], label=str(0))
+   
+    out_pdf.savefig()
+    plt.close()
+
+    ax.spines["right"].set_visible(False)
+    ax.spines["top"].set_visible(False)
+    ax.spines["left"].set_alpha(0.5)
+    ax.spines["bottom"].set_alpha(0.5)
+    ax.tick_params(labelsize=15)
+    # ax.margins(x=0)
+    # ax.margins(y=0)
+    fig.tight_layout()
+
+    out_pdf.savefig()
+    plt.close()
+    plt.clf()

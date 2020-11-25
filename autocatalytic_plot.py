@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy import stats
 from matplotlib.ticker import FormatStrFormatter
+from matplotlib.colors import LogNorm
+
 
 def normalise_list(x):
     x_min = np.min(x)
@@ -137,9 +139,9 @@ def entropy_heatmap():
 
         plt.savefig(output_path, dpi=500)
 
-def LE_heatmap():
-    data_dir = "./output/autocat_3_rej/autocat_3_rej_8/Population_0/"
-    distances_df = pd.read_csv(data_dir + "distances.csv")
+def make_LE_data():
+    data_dir = "./output/autocat_7_sprott_bene/chunk_0/Population_end/"
+    distances_df = pd.read_csv(data_dir + "model_sim_distances/model_0_distances.csv")
     params_df = pd.read_csv(data_dir + "model_sim_params/model_0_all_params.csv")
 
     inf_idxs = distances_df.index[np.isinf(distances_df[['d1', 'd2', 'd3']]).any(1)]
@@ -155,125 +157,33 @@ def LE_heatmap():
     # plt.show()
     # exit(0)
 
+    max_LE = []
+
+    min_species = []
+    m_values = []
+
     for idx, row in distances_df.iterrows():
-        LE_1 = row['d1']
-        LE_2 = row['d2']
-        LE_3 = row['d3']
-        LE_4 = row['d4']
+        X1_min = 1/row['d6']
+        X2_min = 1/row['d7']
+        X3_min = 1/row['d8']
+        X4_min = 1/row['d9']
 
-        LE_1 = np.around(LE_1, 3)
-        print(LE_1)
-        # LE_2 = LE_2 - LE_1
-        # LE_3 = LE_3 - LE_2 - LE_1
-        # LE_4 = LE_4 - LE_3 - LE_2 - LE_1
-
-        threshold = 0.005
-        is_zero = lambda x: True if (x < threshold) * (x > -threshold) else False
-        is_pos = lambda x: x > threshold
-        is_neg = lambda x: x < -threshold
-
-        # print(0.003116)
-        # print(np.around(0.003116, 2))
-        # print(is_zero(np.around(0.003116, 3)))
-        # print(is_pos(np.around(0.003116, 3)))
-        # print(is_neg(np.around(0.003116, 3)))
-
-        # exit()
-
-        # if LE_1 < 0 and LE_2 < 0 and LE_3 < 0 and LE_4 < 0:
-        #     LE_classification.append('LIMIT_CYCLE')
-
-        # elif is_zero(LE_1) and is_zero(LE_2) and is_zero(LE_3) and is_zero(LE_4):
-        #     LE_classification.append('STABLE')
-
-        # elif np.all([LE_1 > 0, LE_2 > 0, LE_3 > 0]):
-        #     LE_classification.append('UNSTABLE')
-
-        # elif np.any([LE_1 > 0, LE_2 > 0, LE_3 > 0, LE_4 > 0]):
-        #     LE_classification.append('STRANGE')
-
-
-        # if is_zero(LE_1):
-        #     LE_classification.append('STABLE')
-
-        if LE_1 < 0:
-            LE_classification.append('LIMIT_CYCLE')
-
-        elif LE_1 > 0:
-            LE_classification.append('STRANGE')
-
-
-        elif LE_1 == 0:
-            LE_classification.append('STABLE')
-
-        # elif np.any([is_pos(LE_1), is_pos(LE_2), is_pos(LE_3), is_pos(LE_4)]):
-        #     LE_classification.append('STRANGE')
-        # # Strange attractor for four dimensions
-        # # +, +, 0, -
-        # # +, 0, 0, -
-        # # +, 0, -, -
-        # elif is_pos(LE_1) and is_pos(LE_2) and is_zero(LE_3) and is_neg(LE_4):
-        #     LE_classification.append('STRANGE')
-        
-
-        # elif is_pos(LE_1) and is_zero(LE_2) and is_zero(LE_3) and is_neg(LE_4):
-        #     LE_classification.append('STRANGE')
-
-        # elif is_pos(LE_1) and is_zero(LE_2) and is_neg(LE_3) and is_neg(LE_4):
-        #     LE_classification.append('STRANGE')
-
-
-        else:
-            LE_classification.append('STABLE')
-
+        print(np.min([X1_min, X2_min, X3_min, X4_min]))
+        min_species.append(np.min([X1_min, X2_min, X3_min, X4_min]))
 
     plot_data = {
-    'm': params_df['m'].values, 'K_1': params_df['K_1'].values, 'LE_1': distances_df['d1'].values, 
-    'LE_2': distances_df['d2'].values, 'LE_3': distances_df['d3'].values, 'LE_4': distances_df['d4'].values, 'LE_classification': LE_classification
+    'm': params_df['m'].values, 'K_1': params_df['K_1'].values, 'sprott_LE': distances_df['d1'].values, 
+    'bene_LE': distances_df['d2'].values, 'min_species': min_species
     }
+
     plot_df = pd.DataFrame(plot_data)
 
-    print(plot_df.loc[plot_df['LE_classification'] == 'STABLE'])
-
-    n_bins = 30
-
-    m_bins = np.linspace(0.1, 1.0, n_bins)
-    K_1_bins = np.linspace(1.0, 20.0, n_bins)
-
-    m_bins = list(np.around(m_bins,2))
-    K_1_bins = list(np.around(K_1_bins,2))
-
-    plot_metrics = ['LE_1', 'LE_2', 'LE_3', 'LE_4']
-
-    for metric in plot_metrics:
-        fig, ax = plt.subplots(figsize=(13,10)) 
-
-        binned_grid = stats.binned_statistic_2d(x=plot_df['K_1'], y=plot_df['m'], values=plot_df[metric], statistic='mean', bins=[K_1_bins, m_bins], range=None, expand_binnumbers=False)
-        sns.heatmap(binned_grid.statistic.T, ax=ax)
-        # ax.set_xticklabels(K_1_bins, rotation=90)
-        ax.set_facecolor("yellow")
-        ax.set_title(metric)
-
-        ax.invert_yaxis()
-        # ax.set_yticklabels(m_bins, rotation=0)
-
-        output_path = data_dir + metric + '_autocat.pdf'
-
-        plt.savefig(output_path, dpi=500)
-        plt.close()
-
-    fig, ax = plt.subplots(figsize=(13,10))
-    sns.scatterplot(x="K_1", y="m", data=plot_data, hue = 'LE_classification', edgecolors=None, alpha = 0.7)
-    output_path = data_dir + 'LE_class_autocat.pdf'
-    plt.savefig(output_path, dpi=500)
-    plt.close()
-
-
+    plot_df.to_csv(data_dir + 'LE_data.csv')
 
 
 def RQA_plots():
     # https://www.pnas.org/content/pnas/86/1/142.full.pdf
-    data_dir = "./output/autocat_1_rej/autocat_1_rej_1/Population_0/"
+    data_dir = "./output/autocat_3_rej/chunk_0/Population_end/"
     distances_df = pd.read_csv(data_dir + "distances.csv")
     params_df = pd.read_csv(data_dir + "model_sim_params/model_0_population_all_params")
 
@@ -324,10 +234,98 @@ def RQA_plots():
     exit()
 
 
+def LE_heatmaps():
+    data_dir = "./output/autocat_7_sprott_bene/chunk_0/Population_end/"
+    distances_df = pd.read_csv(data_dir + "model_sim_distances/model_0_distances.csv")
+    params_df = pd.read_csv(data_dir + "model_sim_params/model_0_all_params.csv")
+
+    plot_df = pd.read_csv(data_dir + "LE_data.csv")
+
+
+    extinct_func = lambda x: True if (x < 1e-20) else False
+    # extinct_idxs = plot_df.index[plot_df['min_species'].map(extinct_func)]
+    plot_df.drop(plot_df[plot_df['min_species'] < 1e-4].index, inplace=True)
+
+    print(plot_df.loc[plot_df['sprott_LE'].idxmax()])
+    print(plot_df.loc[plot_df['bene_LE'].idxmax()])
+
+    n_bins = 50
+    m_bins = np.linspace(0.1, 1.0, n_bins)
+    K_1_bins = np.linspace(1.0, 20.0, n_bins)
+
+    m_bins = list(np.around(m_bins,3))
+    K_1_bins = list(np.around(K_1_bins,3))
+
+    plot_metrics = ['sprott_LE', 'bene_LE', 'min_species']
+    width_inches = 95*4 / 25.4
+    height_inches = 51*4 / 25.4
+
+    for metric in plot_metrics:
+        fig, ax = plt.subplots(figsize=(13,10))
+
+        binned_grid = stats.binned_statistic_2d(x=plot_df['K_1'], y=plot_df['m'], values=plot_df[metric], statistic='median', 
+            bins=[K_1_bins, m_bins], range=None, expand_binnumbers=False)
+
+
+
+        xbins = binned_grid.x_edge[:-1]
+        ybins = binned_grid.y_edge[:-1]
+
+        print(np.shape(xbins))
+        print(np.shape(ybins))
+        print(xbins)
+        print(ybins)
+        # exit()
+
+        if metric == "xag":
+            sns.heatmap(binned_grid.statistic, ax=ax, color='mako')
+
+        else:
+            sns.heatmap(binned_grid.statistic.T, ax=ax, cmap='mako',vmin=-0.01, vmax=0.04)
+        
+        for _, spine in ax.spines.items():
+            spine.set_visible(True)
+
+        ax.set_xticklabels(xbins, rotation=90)
+        ax.set_yticklabels(ybins, rotation=0)
+
+        ax.set_facecolor("#e30b17")
+        ax.patch.set_alpha(0.1)
+        ax.set_title(metric)
+        ax.invert_yaxis()
+        # ax.xaxis.set_major_locator(ticker.MultipleLocator(5))
+
+        output_path = data_dir + metric + '_autocat.pdf'
+
+        fig.tight_layout()
+
+        plt.savefig(output_path, dpi=500)
+        plt.close()
+
+
+    # width_inches = 95*4 / 25.4
+    # height_inches = 51*4 / 25.4
+
+    # fig, ax = plt.subplots(figsize=(width_inches,height_inches))
+    # sns.scatterplot(x="K_1", y="m", data=plot_df, hue = 'LE_classification', edgecolors=None, alpha = 0.7)
+    # output_path = data_dir + 'LE_class_autocat.pdf'
+    # plt.savefig(output_path, dpi=500)
+    # plt.close()
+
+def max_LE_hist():
+    data_dir = "./output/autocat_6_rej/chunk_0/Population_end/"
+    distances_df = pd.read_csv(data_dir + "model_sim_distances/model_0_distances.csv")
+    params_df = pd.read_csv(data_dir + "model_sim_params/model_0_all_params.csv")
+
+    plt.hist(distances_df['d1'], bins=100)
+    plt.show()
 
 
 def main():
-    LE_heatmap()
+    # max_LE_hist()
+    # exit()
+    make_LE_data()
+    LE_heatmaps()
     exit()
     entropy_heatmap()
     RQA_plots()

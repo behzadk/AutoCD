@@ -5,9 +5,10 @@ import matplotlib.pyplot as plt
 
 from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
-
+from sklearn.linear_model import LinearRegression
+from sklearn.tree import export_graphviz
 from itertools import combinations
-
+from sklearn.ensemble import RandomForestRegressor
 # # Importing the Keras libraries and packages
 # from keras.models import Sequential
 # from keras.layers import Convolution2D
@@ -20,6 +21,9 @@ from collections import Counter
 
 import pyunicorn
 from sklearn import tree
+
+import graphviz
+import pickle
 
 def process_data(df):
     df = df[df['integ_error'] != 'species_decayed']
@@ -166,7 +170,6 @@ def plot_2d_param_dens(model_distance_df, model_idx, data_dir, priors_dir, outpu
     temp_model_params_path = model_params_dir + "temp_model_#IDX#_all_params.csv".replace('#IDX#', str(model_idx))    
 
     model_input_parameter_path = priors_dir + '/params_#IDX#.csv'.replace('#IDX#', str(model_idx))
-
     model_input_species_path = priors_dir + '/species_#IDX#.csv'.replace('#IDX#', str(model_idx))
     
     params_list = []
@@ -233,27 +236,11 @@ def PCA_analysis(df):
     plt.show()
 
 
-def k_means(df):
-    param_columns = [x for x in df.columns if 'param_' in x]
-    print(param_columns)
-
-    X_data = df[param_columns].values
-
-    random_state = 42
-    y_pred = KMeans(n_clusters=2, random_state=random_state).fit_predict(X_data)
-
-    print(y_pred)
-
-    sns.scatterplot(x=df.max_LE, y=y_pred, s=3)
-    plt.show()
-    exit(0)
-
-
-def CART(output_dir):
+def multi_linear_regression(output_dir):
     merge_df = pd.read_csv(output_dir + 'net_analysis_df.csv')
     merge_df.fillna(0, inplace=True)
 
-    X_columns = ['total_node_weight', 'transitivity', 'transitivity_4', 'link_density', 
+    X_columns = ['total_mat_weight', 'transitivity', 'transitivity_4', 'link_density', 
     'diameter', 'edge_betweenness', 'spreading', 'assortativity']
 
 
@@ -262,48 +249,218 @@ def CART(output_dir):
 
 
     Y_column = ['surv_pprob']
+    Y_column = ['strange_pprob']
+
+    X_data = merge_df[X_columns].values
+    Y_data = merge_df[Y_column].values
+    print(np.shape(X_data))
+    print(np.shape(Y_data))
+
+    reg = LinearRegression().fit(X_data, Y_data)
+    print(reg.score(X_data, Y_data))
+    Y_pred = reg.predict(X_data)
+
+    Y_data = Y_data.reshape(-1)
+    Y_pred = Y_pred.reshape(-1)
+
+    sns.scatterplot(x=Y_data, y=Y_pred)
+
+    plt.savefig(output_dir + "mlr.pdf")
+    plt.show()
+
+
+
+def k_means(output_dir):
+    merge_df = pd.read_csv(output_dir + 'net_analysis_df.csv')
+    merge_df.fillna(0, inplace=True)
+
+    X_columns = ['total_mat_weight', 'transitivity', 'transitivity_4', 'link_density', 
+    'diameter', 'edge_betweenness', 'spreading', 'assortativity']
+
+
+    # X_columns = ['transitivity','edge_betweenness', 'spreading', 'assortativity']
+    X_columns = ['transitivity', 'edge_betweenness', 'spreading', 'assortativity', 'diameter']
+
+
     Y_column = ['surv_pprob']
+    Y_column = ['strange_pprob']
 
     X_data = merge_df[X_columns].values
     Y_data = merge_df[Y_column].values
 
-    print(X_columns)
-
-    clf = tree.DecisionTreeRegressor()
-    clf = clf.fit(X_data, Y_data)
-    print(clf.feature_importances_)
-
-    Y_pred = clf.predict(X_data)
-    
-    # tree.plot_tree(clf)
-    # plt.show()
-
-    Y_pred = Y_pred.reshape(-1)
+    random_state = 42
+    y_pred = KMeans(n_clusters=2, random_state=random_state).fit_predict(X_data)
+    print(y_pred[0])
     Y_data = Y_data.reshape(-1)
+    # y_pred = y_pred.reshape(-1)
 
-    x_line = [0, 0.01, 0.0175]
-    y_line = x_line
+    print(np.shape(y_pred))
 
-    print(np.shape(Y_pred))
-    print(np.shape(Y_data))
-    sns.scatterplot(x=Y_data, y=Y_pred)
-    sns.lineplot(x=x_line, y=y_line)
-
-    # plt.yscale('symlog')
+    sns.scatterplot(x=y_pred[:,0], y=y_pred[:,1], s=4, hue=Y_data)
     plt.show()
 
-    print(diff)
+def random_forest(output_dir):
+    merge_df = pd.read_csv(output_dir + 'net_analysis_df.csv')
+    merge_df.fillna(-1, inplace=True)
+
+    merge_df.drop(merge_df.loc[merge_df['strange_pprob']==0.0].index, inplace=True)
+
+    X_columns = ['total_mat_weight', 'transitivity', 'transitivity_4', 'link_density', 
+    'diameter', 'edge_betweenness', 'spreading', 'assortativity']
+
+
+    # X_columns = ['transitivity','edge_betweenness', 'spreading', 'assortativity']
+    X_columns = ['total_mat_weight', 'transitivity', 'edge_betweenness', 'spreading', 'assortativity', 'diameter']
+
+    X_columns = ['total_mat_weight', 'transitivity', 'spreading', 'synchronizability']#, 'edge_betweenness', 'spreading', 'assortativity', 'diameter']
+    # X_columns = ['transitivity', 'spreading'] #, 'transitivity', 'spreading']#, 'edge_betweenness', 'spreading', 'assortativity', 'diameter']
+    X_columns = ['norm_total_mat_weight', 'transitivity', 'norm_spreading', 'norm_synchronizability']#, 'edge_betweenness', 'spreading', 'assortativity', 'diameter']
+
+    Y_column = ['surv_pprob']
+    Y_column = ['strange_pprob']
+
+    Y_column = ['norm_strange_pprob']
+
+
+    mask = np.random.rand(len(merge_df)) < 1.0
+    train_df = merge_df[mask]
+    test_df = merge_df[~mask]
+    test_df = merge_df[mask]
+
+
+    X_train = train_df[X_columns].values
+    Y_train = train_df[Y_column].values.reshape(-1)
+    
+    X_test = test_df[X_columns].values
+    Y_test = test_df[Y_column].values
+
+    regr = RandomForestRegressor(max_depth=25, random_state=0)
+    regr.fit(X_train, Y_train)
+
+    print(regr.feature_importances_)
+
+    Y_train_pred = regr.predict(X_train)
+    Y_test_pred = regr.predict(X_test)
+
+
+    Y_test = Y_test.reshape(-1)
+    Y_train = Y_train.reshape(-1)
+    Y_test_pred = Y_test_pred.reshape(-1)
+    Y_train_pred = Y_train_pred.reshape(-1)
+
+
+    x_line = [0, 0.1, 1.0]
+    y_line = x_line
+
+    # sns.scatterplot(x=Y_train, y=Y_train_pred, s=6, label='train_set')
+    sns.scatterplot(x=Y_test, y=Y_test_pred, s=2, label='test_set', linewidth=0)
+
+    sns.lineplot(x=x_line, y=y_line)
+
+    plt.savefig(output_dir + "rdn_frst.pdf")
+    plt.close()
+
+    with open(output_dir + 'strange_rdn_frst.pkl', 'wb') as fid:
+        pickle.dump(regr, fid)    
+
+
+
+
+def CART(output_dir):
+    merge_df = pd.read_csv(output_dir + 'net_analysis_df.csv')
+    merge_df.fillna(-1, inplace=True)
+
+    # merge_df.drop(merge_df.loc[merge_df['strange_pprob']==0.0].index, inplace=True)
+    X_columns = ['total_mat_weight', 'transitivity', 'transitivity_4', 'link_density', 
+    'diameter', 'edge_betweenness', 'spreading', 'assortativity']
+
+
+    # X_columns = ['transitivity','edge_betweenness', 'spreading', 'assortativity']
+    X_columns = ['transitivity', 'edge_betweenness', 'spreading', 'assortativity', 'diameter']
+    X_columns = ['norm_total_mat_weight', 'transitivity', 'norm_spreading', 'norm_synchronizability']#, 'edge_betweenness', 'spreading', 'assortativity', 'diameter']
+
+
+    Y_column = ['surv_pprob']
+    Y_column = ['strange_pprob']
+
+    Y_column = ['norm_surv_pprob']
+    Y_column = ['norm_strange_pprob']
+
+    mask = np.random.rand(len(merge_df)) < 1.0
+    train_df = merge_df[mask]
+    test_df = merge_df[~mask]
+    test_df = merge_df[mask]
+
+
+    X_train = train_df[X_columns].values
+    Y_train = train_df[Y_column].values
+
+
+    clf = tree.DecisionTreeRegressor()
+    clf = clf.fit(X_train, Y_train)
+    print(clf.feature_importances_)
+
+    X_test = test_df[X_columns].values
+    Y_test = test_df[Y_column].values
+
+
+    Y_train_pred = clf.predict(X_train)
+    Y_test_pred = clf.predict(X_test)
+
+
+    dot_data = export_graphviz(clf, out_file =None, feature_names = X_columns)
+    graph = graphviz.Source(dot_data)
+    # graph.view()
+
+
+    tree.plot_tree(clf)
+    plt.savefig(output_dir + "tree.pdf")
+    plt.close()
+
+    Y_test = Y_test.reshape(-1)
+    Y_train = Y_train.reshape(-1)
+    Y_test_pred = Y_test_pred.reshape(-1)
+    Y_train_pred = Y_train_pred.reshape(-1)
+
+    x_line = [0, 0.01,1.0]
+    y_line = x_line
+
+    # sns.scatterplot(x=Y_train, y=Y_train_pred, s=6, label='train_set')
+    sns.scatterplot(x=Y_test, y=Y_test_pred, s=3, label='test_set', linewidth=0)
+
+    sns.lineplot(x=x_line, y=y_line, alpha=0.5, color='black', linewidth=1)
+
+    plt.savefig(output_dir + "tree_fit.pdf")
+    plt.close()
+    
+    with open(output_dir + 'strange_dectree.pkl', 'wb') as fid:
+        pickle.dump(clf, fid)    
+
+    # cmap = sns.cubehelix_palette(rot=-.2, as_cmap=True)
+    # sns.scatterplot(x='synchronizability', y='strange_pprob', data=merge_df, hue='strange_pprob', s=5, linewidth=0, palette=cmap)
+    # plt.show()
+
+    cmap = sns.cubehelix_palette(rot=-.2, as_cmap=True)
+    sns.scatterplot(x='synchronizability', y='total_mat_weight', data=merge_df, hue='strange_pprob', palette=cmap)
+    # plt.show()
+
+def min_max_normalise_list(data_list):
+    max_data = np.max(data_list)
+    min_data = np.min(data_list)
+    norm_list = [(x - min_data) / (max_data - min_data) for x in data_list]
+
+    return norm_list
+
 
 def make_network_analysis_data(counts_df, adj_mat_dir, output_dir):
     adj_mat_path_templ = adj_mat_dir + "model_#IDX#_adj_mat.csv"
-
+    
     make_csv = True
     if make_csv:
         data = {
         'model_idx': [],
-        'total_node_weight': [],
+        'total_mat_weight': [],
         'transitivity': [],
-        'transitivity_4': [],
         'link_density': [], 
         'diameter': [], 
         'edge_betweenness': [],
@@ -322,9 +479,8 @@ def make_network_analysis_data(counts_df, adj_mat_dir, output_dir):
 
             if np.sum(adj_mat) == 0:
                 data['model_idx'].append(model_idx)
-                data['total_node_weight'].append(0)
+                data['total_mat_weight'].append(0)
                 data['transitivity'].append(0)
-                data['transitivity_4'].append(0)
                 data['link_density'].append(0)
                 data['diameter'].append(0)
                 data['edge_betweenness'].append(0)
@@ -336,13 +492,14 @@ def make_network_analysis_data(counts_df, adj_mat_dir, output_dir):
                 net = pyunicorn.core.network.Network(adjacency=adj_mat)
 
                 data['model_idx'].append(model_idx)
-                data['total_node_weight'].append(net.total_node_weight)
+                data['total_mat_weight'].append(np.sum(adj_mat))
                 data['transitivity'].append(net.transitivity())
-                data['transitivity_4'].append(net.higher_order_transitivity(4))
                 data['link_density'].append(net.link_density)
                 data['diameter'].append(net.diameter())
                 data['edge_betweenness'].append(np.sum(net.edge_betweenness()))
+                
                 data['spreading'].append(np.sum(net.spreading()))
+
                 # print(net.local_cliquishness(3))
                 data['synchronizability'].append(net.msf_synchronizability())
                 # print(net.msf_synchronizability())
@@ -361,113 +518,116 @@ def make_network_analysis_data(counts_df, adj_mat_dir, output_dir):
 
         data['strange_pprob'] = strange_pprobs
         data['surv_pprob'] = surv_pprobs
+
+        data['norm_surv_pprob'] = min_max_normalise_list(surv_pprobs)
+        data['norm_strange_pprob'] = min_max_normalise_list(strange_pprobs)
+        data['norm_total_mat_weight'] = min_max_normalise_list(data['total_mat_weight'])
+        data['norm_spreading'] = min_max_normalise_list(data['spreading'])
+        data['norm_synchronizability'] = min_max_normalise_list(data['synchronizability'])
+
         net_analysis_df = pd.DataFrame(data)
 
         merge_df = pd.merge(counts_df, net_analysis_df, on='model_idx')
+        merge_df.sort_values(by=['model_idx'], ascending=True, inplace=True)
         merge_df.to_csv(output_dir + 'net_analysis_df.csv')
 
     merge_df = pd.read_csv(output_dir + 'net_analysis_df.csv')
     merge_df.sort_values(by=['all_counts'], ascending=False, inplace=True)
 
+    merge_df = merge_df.loc[merge_df['total_mat_weight'] != 0]
 
-    merge_df = merge_df.loc[merge_df['model_idx'] != 1739]
+    # width_inches = 95*4 / 25.4
+    # height_inches = 51*4 / 25.4
+    # fig, ax = plt.subplots(figsize=(width_inches, height_inches))
+    # sns.scatterplot(data=merge_df, y='surv_pprob', x='transitivity', ax=ax)
+    # ax.legend().remove()
+    # ax.spines["right"].set_visible(False)
+    # ax.spines["top"].set_visible(False)
+    # ax.spines["left"].set_alpha(0.5)
+    # ax.spines["bottom"].set_alpha(0.5)
+    # ax.set(xticklabels=[])
+    # # ax.set(xlabel='')
 
-    width_inches = 95*4 / 25.4
-    height_inches = 51*4 / 25.4
-    fig, ax = plt.subplots(figsize=(width_inches, height_inches))
-    sns.scatterplot(data=merge_df, y='surv_pprob', x='transitivity', ax=ax)
-    ax.legend().remove()
-    ax.spines["right"].set_visible(False)
-    ax.spines["top"].set_visible(False)
-    ax.spines["left"].set_alpha(0.5)
-    ax.spines["bottom"].set_alpha(0.5)
-    ax.set(xticklabels=[])
-    # ax.set(xlabel='')
-
-    plt.show()
-    plt.close()
-
-
-    width_inches = 95*4 / 25.4
-    height_inches = 51*4 / 25.4
-    fig, ax = plt.subplots(figsize=(width_inches, height_inches))
-    sns.scatterplot(data=merge_df, y='surv_pprob', x='transitivity_4', ax=ax)
-    ax.legend().remove()
-    ax.spines["right"].set_visible(False)
-    ax.spines["top"].set_visible(False)
-    ax.spines["left"].set_alpha(0.5)
-    ax.spines["bottom"].set_alpha(0.5)
-    ax.set(xticklabels=[])
-    # ax.set(xlabel='')
-
-    plt.show()
-    plt.close()
-
-    width_inches = 95*4 / 25.4
-    height_inches = 51*4 / 25.4
-    fig, ax = plt.subplots(figsize=(width_inches, height_inches))
-    sns.scatterplot(data=merge_df, y='strange_pprob', x='edge_betweenness', ax=ax)
-    ax.legend().remove()
-    ax.spines["right"].set_visible(False)
-    ax.spines["top"].set_visible(False)
-    ax.spines["left"].set_alpha(0.5)
-    ax.spines["bottom"].set_alpha(0.5)
-    ax.set(xticklabels=[])
-    # ax.set(xlabel='')
-
-    plt.show()
-    plt.close()
+    # plt.show()
+    # plt.close()
 
 
-    width_inches = 95*4 / 25.4
-    height_inches = 51*4 / 25.4
-    fig, ax = plt.subplots(figsize=(width_inches, height_inches))
-    sns.barplot(data=merge_df, x='model_idx', y='strange_pprob', ax=ax)
-    ax.legend().remove()
-    ax.spines["right"].set_visible(False)
-    ax.spines["top"].set_visible(False)
-    ax.spines["left"].set_alpha(0.5)
-    ax.spines["bottom"].set_alpha(0.5)
-    ax.set(xticklabels=[])
-    # ax.set(xlabel='')
+    # width_inches = 95*4 / 25.4
+    # height_inches = 51*4 / 25.4
+    # fig, ax = plt.subplots(figsize=(width_inches, height_inches))
+    # sns.scatterplot(data=merge_df, y='surv_pprob', x='transitivity_4', ax=ax)
+    # ax.legend().remove()
+    # ax.spines["right"].set_visible(False)
+    # ax.spines["top"].set_visible(False)
+    # ax.spines["left"].set_alpha(0.5)
+    # ax.spines["bottom"].set_alpha(0.5)
+    # ax.set(xticklabels=[])
+    # # ax.set(xlabel='')
 
-    plt.show()
-    plt.close()
+    # plt.show()
+    # plt.close()
 
-    width_inches = 95*4 / 25.4
-    height_inches = 51*4 / 25.4
-    fig, ax = plt.subplots(figsize=(width_inches, height_inches))
-    sns.scatterplot(data=merge_df, x='transitivity', y='strange_pprob', ax=ax)
-    ax.legend().remove()
-    ax.spines["right"].set_visible(False)
-    ax.spines["top"].set_visible(False)
-    ax.spines["left"].set_alpha(0.5)
-    ax.spines["bottom"].set_alpha(0.5)
-    ax.set(xticklabels=[])
-    # ax.set(xlabel='')
+    # width_inches = 95*4 / 25.4
+    # height_inches = 51*4 / 25.4
+    # fig, ax = plt.subplots(figsize=(width_inches, height_inches))
+    # sns.scatterplot(data=merge_df, y='strange_pprob', x='edge_betweenness', ax=ax)
+    # ax.legend().remove()
+    # ax.spines["right"].set_visible(False)
+    # ax.spines["top"].set_visible(False)
+    # ax.spines["left"].set_alpha(0.5)
+    # ax.spines["bottom"].set_alpha(0.5)
+    # ax.set(xticklabels=[])
+    # # ax.set(xlabel='')
 
-    plt.show()
-    plt.close()
-
-
-    width_inches = 95*4 / 25.4
-    height_inches = 51*4 / 25.4
-    fig, ax = plt.subplots(figsize=(width_inches, height_inches))
-    sns.scatterplot(data=merge_df, y='strange_pprob', x='total_node_weight', ax=ax)
-    ax.legend().remove()
-    ax.spines["right"].set_visible(False)
-    ax.spines["top"].set_visible(False)
-    ax.spines["left"].set_alpha(0.5)
-    ax.spines["bottom"].set_alpha(0.5)
-    ax.set(xticklabels=[])
-    # ax.set(xlabel='')
-
-    plt.show()
-    plt.close()
+    # plt.show()
+    # plt.close()
 
 
-    exit()
+    # width_inches = 95*4 / 25.4
+    # height_inches = 51*4 / 25.4
+    # fig, ax = plt.subplots(figsize=(width_inches, height_inches))
+    # sns.barplot(data=merge_df, x='model_idx', y='strange_pprob', ax=ax)
+    # ax.legend().remove()
+    # ax.spines["right"].set_visible(False)
+    # ax.spines["top"].set_visible(False)
+    # ax.spines["left"].set_alpha(0.5)
+    # ax.spines["bottom"].set_alpha(0.5)
+    # ax.set(xticklabels=[])
+    # # ax.set(xlabel='')
 
+    # plt.show()
+    # plt.close()
+
+    # width_inches = 95*4 / 25.4
+    # height_inches = 51*4 / 25.4
+    # fig, ax = plt.subplots(figsize=(width_inches, height_inches))
+    # sns.scatterplot(data=merge_df, x='transitivity', y='strange_pprob', ax=ax)
+    # ax.legend().remove()
+    # ax.spines["right"].set_visible(False)
+    # ax.spines["top"].set_visible(False)
+    # ax.spines["left"].set_alpha(0.5)
+    # ax.spines["bottom"].set_alpha(0.5)
+    # ax.set(xticklabels=[])
+    # # ax.set(xlabel='')
+
+    # plt.show()
+    # plt.close()
+
+
+    # width_inches = 95*4 / 25.4
+    # height_inches = 51*4 / 25.4
+    # fig, ax = plt.subplots(figsize=(width_inches, height_inches))
+    # sns.scatterplot(data=merge_df, y='strange_pprob', x='total_mat_weight', ax=ax)
+    # ax.legend().remove()
+    # ax.spines["right"].set_visible(False)
+    # ax.spines["top"].set_visible(False)
+    # ax.spines["left"].set_alpha(0.5)
+    # ax.spines["bottom"].set_alpha(0.5)
+    # ax.set(xticklabels=[])
+    # # ax.set(xlabel='')
+
+    # plt.show()
+    # plt.close()
 
 
 def combine_distances(data_dir, model_idxs, output_dir):
@@ -479,6 +639,7 @@ def combine_distances(data_dir, model_idxs, output_dir):
         m_distance_path = model_distance_template.replace('#IDX#', str(m_idx))
         try:
             df = pd.read_csv(m_distance_path)
+
             df_list.append(df)
 
         except FileNotFoundError:
@@ -494,10 +655,10 @@ def label_attractor(row):
     max_LE = row['max_LE']
     # max_LE = LE_list[0]
 
-    if max_LE >=0.001:
+    if max_LE > 0.05:
         label= 'STRANGE'
 
-    elif max_LE > -0.001 and max_LE <=0.001:
+    elif max_LE > -0.05 and max_LE <=0.05:
         label= 'LIMIT'
 
     else:
@@ -529,6 +690,7 @@ def make_counts_df(df, model_idxs):
     'ratio': []
     }
 
+    threshold = 0.05
     for x in model_idxs:
         if all_counts[x] > 0:
             data['model_idx'].append(x)
@@ -546,32 +708,74 @@ def make_counts_df(df, model_idxs):
 
     return counts_df
 
+def compare_prediction_and_real(data_dir):
+    real_df = pd.read_csv(data_dir + "net_analysis_df.csv")
+    pred_df = pd.read_csv(data_dir + "sampled_models.csv")
+
+    pred_df = pred_df[['model_idx', 'rdn_frst_predictions']]
+
+
+    sum_pred = np.sum(pred_df['rdn_frst_predictions'].values)
+
+    rescale_func = lambda x: x / sum_pred
+
+    pred_df['norm_pred'] = np.vectorize(rescale_func)(pred_df['rdn_frst_predictions'])
+
+    print(pred_df.columns)
+    print(real_df.columns)
+
+    merge_df = real_df.merge(pred_df, how='outer')
+
+    sns.scatterplot(y='rdn_frst_predictions', x='strange_pprob', data=merge_df)
+    plt.show()
+
 
 def main():
     data_dir = "./output/gen_LV_four_chem_0_rej/chunk_0/Population_end/"
     data_dir = "./output/gen_LV_four_chem_0_rej/gen_LV_four_chem_0_rej_10/Population_0/"
     data_dir = '~/Documents/AutoCD/output/gen_LV_four_chem_0_rej_2/gen_LV_four_chem_0_rej_1/Population_0/'
     data_dir = '/home/behzad/Documents/AutoCD/output/gen_LV_four_chem_0_rej_4/chunk_0/Population_end/'
-    
-    priors_dir = './ABC_input_files/input_files_gen_LV_four_chemostat/input_files/'
-    adj_mat_dir = './ABC_input_files/input_files_gen_LV_four_chemostat/adj_matricies/'
 
-    distance_path = data_dir + "distances.csv"
+    data_dir = '/home/behzad/Documents/AutoCD/output/gen_LV_four_chem_3_rej_0/chunk_0/Population_end/'
+
+    priors_dir = './ABC_input_files/input_files_gen_LV_four_chemostat_3/input_files/'
+    adj_mat_dir = './ABC_input_files/input_files_gen_LV_four_chemostat_3/adj_matricies/'
+
+
+
+    # data_dir = '/home/behzad/Documents/AutoCD/output/gen_LV_five_chem_0_rej_0/chunk_0/Population_end/'
+
+    # priors_dir = './ABC_input_files/input_files_gen_LV_five_chemostat_0/input_files/'
+    # adj_mat_dir = './ABC_input_files/input_files_gen_LV_five_chemostat_0/adj_matricies/'
+
+
     output_dir = data_dir
 
+    # compare_prediction_and_real(data_dir)
+    # exit()
 
-    model_idxs = list(range(1740))
-    # df = combine_distances(data_dir, model_idxs, output_dir)
+    model_idxs = list(range(1017))
+    model_idxs = list(range(1))
+    df = combine_distances(data_dir, model_idxs, output_dir)
     df = pd.read_csv(output_dir + 'master_distances.csv')
+    # exit()
+    # # k_means(output_dir)
+    # # multi_linear_regression(output_dir)
+    # random_forest(output_dir)
+    # CART(output_dir)
+    # exit()
+    # CART(output_dir)
+    # exit()
 
-    # df = df.loc[df['model_ref'] == 307]
-    LE_list = ['d1', 'd2', 'd3', 'd4']
+
+    LE_list = ['d1', 'd2', 'd3', 'd4', 'd5']
     max_LE_func = lambda row: np.max(row[LE_list].values)
    
     print("Making max LE column")
-    # df['max_LE'] = df[LE_list].apply(max_LE_func, axis=1)
     df['max_LE'] = make_max_LE(df)
 
+    # print(df.loc[df['max_LE'].idxmax()])
+    # exit()
     print("Making attractor labels")
     df['label'] = df[['max_LE']].apply(label_attractor, axis=1)
 
@@ -579,17 +783,16 @@ def main():
 
     counts_df = make_counts_df(df, model_idxs)
     counts_df.sort_values(by=['strange_counts'], ascending=False, inplace=True)
-    
-    CART(output_dir)
-    exit()
-
     make_network_analysis_data(counts_df, adj_mat_dir, output_dir)
-    exit()
 
-    df = df.loc[df['model_ref'] == 307]
-    strange_sub_df = strange_sub_df.loc[strange_sub_df['model_ref'] == 307]
+    random_forest(output_dir)
 
-    plot_2d_param_dens(df, 307, data_dir, priors_dir, output_dir)
+    # multi_linear_regression(output_dir)
+    # k_means(output_dir)
+    df = df.loc[df['model_ref'] == 0]
+    strange_sub_df = strange_sub_df.loc[strange_sub_df['model_ref'] == 0]
+
+    plot_2d_param_dens(df, 0, data_dir, priors_dir, output_dir)
 
     exit()
     # exit()

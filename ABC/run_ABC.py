@@ -27,7 +27,7 @@ import yaml
 import argparse
 
 from shutil import copy
-
+from .cliff_finder import CliffFinder
 
 def import_input_file(input_path):
     data_dict = {}
@@ -109,7 +109,7 @@ def main():
     # Load models from input files
     model_list = []
     for i in range(int((len(os.listdir(input_folder)) / 2))):
-        # if i != 307:
+        # if i != 858:
         #     continue
         input_params = input_folder + "params_" + str(i) + ".csv"
         input_init_species = input_folder + "species_" + str(i) + ".csv"
@@ -120,6 +120,9 @@ def main():
         model_list.append(model_new)
 
 
+
+    # CliffFinder(model_list)
+    # exit()
     # Run ABC_rejection algorithm
     ABC_algs = algorithms.ABC(t_0, t_end, dt, exp_num=exp_num, model_list=model_list, population_size=population_size,
                               n_sims_batch=n_sims_batch,

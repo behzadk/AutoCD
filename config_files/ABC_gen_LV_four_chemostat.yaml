@@ -1,4 +1,4 @@
-experiment_name: gen_LV_four_chem_0_rej
+experiment_name: gen_LV_four_chem_3_rej
 population_modules_path: './ABC_input_files/input_files_gen_LV_four_chemostat/population_modules.so'
 inputs_folder: './ABC_input_files/input_files_gen_LV_four_chemostat/input_files/'
 output_folder: './output/'
@@ -9,18 +9,8 @@ t_end: 1000
 dt: 0.01
 
 final_epsilon:
-  - 1e250
-  - 1e250
-  - 1e250
-  - 1e250
-  - 1e250
-  - 1e250
-  - 1e250
-  - 1e250
-  - 1e250
-  - 1e250
-  - 1e250
-  - 1e250
+  - 20
+
 
 fit_species:
   - 0
@@ -30,23 +20,12 @@ fit_species:
 
 initial_epsilon:
   - 1e250
-  - 1e250
-  - 1e250
-  - 1e250
-  - 1e250
-  - 1e250
-  - 1e250
-  - 1e250
-  - 1e250
-  - 1e250
-  - 1e250
-  - 1e250
 
 abs_tol: 1e-9
 rel_tol: 1e-4
 
-population_size: 10000
-n_sims_batch: 25
+population_size: 5
+n_sims_batch: 2
 
 alpha: 0.5
 
@@ -57,7 +36,7 @@ alpha: 0.5
 distance_function_mode: 2
 
 # Choose which algorithm to run
-run_rejection: Y
+run_rejection: N
 run_chaos_separation: Y
 
 # Number of steps (length of dt) to take and calculate separation
@@ -67,7 +46,7 @@ separation_length: 10000
 theta_0: 1e-4
 
 # Number of timepoints to skip before calculating separation and RQA metrics
-n_skip: 60000
+n_skip: 1000
 
 # Number of timepoints to skip before plotting
 # Start time, end time, time interval
@@ -78,3 +57,6 @@ n_skip_plot: 0
 # Whether to compress output of ABC SMC, will produce a .tar file containing output,
 # it will not delete the directory containing the original information.
 compress_output: Y
+
+
+# POPS less than 1e-4 should be rejected

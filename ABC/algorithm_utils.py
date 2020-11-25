@@ -73,6 +73,27 @@ def check_distances_generic(particle_distances, epsilon_array):
     return particle_judgements
 
 
+def check_distances_LE(particle_distances, epsilon_array):
+    particle_judgements = []
+
+    for part_distances in particle_distances:
+        particle_accept = True
+        
+        # Check if is negative
+        if part_distances[0] < 0:
+            particle_accept = False
+
+        # Use inverse so we are minimising
+        elif (part_distances[0]) > epsilon_array[0]:
+            particle_accept = False
+
+        elif np.isnan(part_distances).any() or any(p > 1e300 for p in part_distances):
+            particle_accept = False
+
+        particle_judgements.append(particle_accept)
+
+    return particle_judgements
+
 def check_distances_osc(particle_distances, epsilon_array):
     particle_judgements = []
     for part_distance in particle_distances:
@@ -147,6 +168,32 @@ def update_epsilon(current_epsilon, final_epsilon, accepted_particle_distances, 
             new_epsilon[e_idx] = final_epsilon[e_idx]
 
     return new_epsilon
+
+def update_epsilon_LE(current_epsilon, final_epsilon, accepted_particle_distances, alpha):
+    n_epsilon = len(final_epsilon)
+
+    n_keep = int(alpha * len(accepted_particle_distances))
+    new_epsilon = [0 for x in range(n_epsilon)]
+    
+    epsilon_accepted_distances = [x[0] for x in accepted_particle_distances]
+    
+    epsilon_accepted_distances.sort()
+    epsilon_accepted_distances = epsilon_accepted_distances[:n_keep]
+    print(epsilon_accepted_distances[0])
+    print(final_epsilon[0])
+    if epsilon_accepted_distances[0] < final_epsilon[0]:
+        new_epsilon[0] = final_epsilon[0]
+
+    else:
+        new_epsilon[0] = epsilon_accepted_distances[:n_keep][0]
+
+    print(new_epsilon)
+    return new_epsilon
+
+
+
+
+
 
 
 def fsolve_conversion(y, pop_obj, particle_ref, n_species):

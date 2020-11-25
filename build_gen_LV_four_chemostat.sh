@@ -2,7 +2,7 @@
 
 # Inputs folder given as first argument
 # contains model.cpp and model.h
-inputs_folder="./ABC_input_files/input_files_gen_LV_four_chemostat"
+inputs_folder="./ABC_input_files/input_files_gen_LV_four_chemostat_3"
 
 ABC_folder=./ABC/
 
