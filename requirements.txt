@@ -30,5 +30,5 @@ sklearn==0.0
 statsmodels==0.11.1
 sympy==1.6
 threadpoolctl==2.1.0
-urllib3==1.25.9
+urllib3==1.26.5
 yarg==0.1.9
