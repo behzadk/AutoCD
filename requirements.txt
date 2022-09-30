@@ -5,7 +5,7 @@ cycler==0.10.0
 decorator==4.4.2
 docopt==0.6.2
 idna==2.9
-joblib==0.15.1
+joblib==1.2.0
 kiwisolver==1.2.0
 matplotlib==3.2.2
 mpmath==1.1.0
